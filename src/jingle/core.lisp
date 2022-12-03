@@ -37,6 +37,8 @@
    :start
    :stop
    :configure
+   :add-middleware
+   :static-path
 
    :error-response
    :error-response-message
@@ -65,6 +67,12 @@
 (defgeneric configure (app)
   (:documentation "Performs any steps needed to configure the
 application, before starting it up"))
+
+(defgeneric static-path (app path root)
+  (:documentation "Adds a static path to serve files from"))
+
+(defgeneric add-middleware (app middleware)
+  (:documentation "Adds a new middleware to the app"))
 
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
@@ -138,7 +146,7 @@ used to query the environment from within the HTTP handlers.")
   "Creates a new jingle app"
   (make-instance 'app
                  :middlewares middlewares
-                 :server-kind server-kind
+                 :http-server-kind server-kind
                  :address address
                  :port port
                  :debug-mode debug-mode
@@ -205,6 +213,15 @@ jingle app"
       (error "Server is not started"))
     (clack:stop http-server)
     (setf http-server nil)))
+
+(defmethod add-middleware ((app app) middleware)
+  (with-accessors ((middlewares middlewares)) app
+    (setf middlewares (append middlewares (list middleware)))))
+
+(defmethod static-path ((app app) path root)
+  (add-middleware app
+                  (lambda (app)
+                    (funcall lack.middleware.static:*lack-middleware-static* app :path path :root root))))
 
 (defun set-response-header (name value)
   "Sets the HTTP header with the given NAME to VALUE to be sent to the
