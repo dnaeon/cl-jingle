@@ -114,3 +114,24 @@ used to query the environment from within the HTTP handlers.")
     :accessor use-threads
     :documentation "Use threads, if set to T"))
   (:documentation "The jingle app"))
+
+(defmethod lack.component:call ((app app) env)
+  "Dynamically binds *ENV* to the Lack environment before it hits the
+HTTP handlers.  This way the HTTP handlers can interact with the
+surrounding environment exposed by Lack.
+
+As of now, December 2022, a regular ningle handler does not have
+access to the Lack environment, which prevents HTTP handlers from
+using additional metadata present in the environment.
+
+The Lack environment is something that is also used by middlewares, so
+making that available to HTTP handlers allows our handlers to share
+additional metadata, which may be pushed by middlewares.
+
+See [1], [2] and [3] for more details.
+
+[1]: https://dnaeon.github.io/common-lisp-web-dev-ningle-middleware/
+[2]: https://github.com/fukamachi/ningle/issues/41
+[3]: https://github.com/fukamachi/lack#the-environment"
+  (let ((*env* env))
+    (call-next-method)))
