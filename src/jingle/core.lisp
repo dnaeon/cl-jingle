@@ -188,3 +188,9 @@ used from within handlers."
   (setf (lack.response:response-headers ningle:*response*)
         (append (lack.response:response-headers ningle:*response*)
                 (list name value))))
+
+(defun set-response-status (code)
+  "Sets the status code for the HTTP response to CODE. Internally
+ningle's response is an instance of LACK.RESPONSE:RESPONSE. This
+function is meant to be used from within handlers."
+  (setf (lack.response:response-status ningle:*response*) code))
