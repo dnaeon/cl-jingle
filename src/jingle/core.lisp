@@ -179,3 +179,12 @@ jingle app"
       (error "Server is not started"))
     (clack:stop http-server)
     (setf http-server nil)))
+
+(defun set-response-header (name value)
+  "Sets the HTTP header with the given NAME to VALUE to be sent to the
+client as part of the HTTP response. Internally ningle's response is
+an instance of LACK.RESPONSE:RESPONSE. This function is meant to be
+used from within handlers."
+  (setf (lack.response:response-headers ningle:*response*)
+        (append (lack.response:response-headers ningle:*response*)
+                (list name value))))
