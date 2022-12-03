@@ -53,6 +53,10 @@
 (defgeneric stop (app)
   (:documentation "Stops the jingle application and the underlying HTTP server"))
 
+(defgeneric configure (app)
+  (:documentation "Performs any steps needed to configure the
+application, before starting it up")
+
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
 used to query the environment from within the HTTP handlers.")
@@ -135,3 +139,12 @@ See [1], [2] and [3] for more details.
 [3]: https://github.com/fukamachi/lack#the-environment"
   (let ((*env* env))
     (call-next-method)))
+
+(defmethod configure ((app app))
+  "Sets up the final application by applying all middlewares to our
+jingle app"
+  (with-accessors ((middlewares middlewares)) app
+    (loop :with wrapped-app = (lack:builder app)
+          :for middleware :in (reverse middlewares) :do
+            (setf wrapped-app (lack:builder middleware wrapped-app))
+          :finally (return wrapped-app))))
