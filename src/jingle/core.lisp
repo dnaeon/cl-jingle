@@ -71,3 +71,46 @@ used to query the environment from within the HTTP handlers.")
 (defmethod jonathan:%to-json ((object error-response))
   (jonathan:with-object
     (jonathan:write-key-value "message" (error-response-message object))))
+
+(defclass app (ningle:app)
+  ((http-server
+    :initarg :http-server
+    :initform nil
+    :accessor http-server
+    :documentation "The underlying HTTP server of the app. Do not set this slot directly.")
+   (http-server-kind
+    :initarg :http-server-kind
+    :initform :hunchentoot
+    :accessor http-server-kind
+    :documentation "The HTTP server to use, e.g. :hunchentoot, :woo, etc.")
+   (middlewares
+    :initarg :middlewares
+    :initform nil
+    :accessor middlewares
+    :documentation "The list of middlewares for the app")
+   (address
+    :initarg :address
+    :initform "127.0.0.1"
+    :accessor address
+    :documentation "The address on which the server will listen on")
+   (port
+    :initarg :port
+    :initform 5000
+    :accessor port
+    :documentation "The port on which the server will listen to")
+   (debug
+    :initarg :debug
+    :initform t
+    :accessor debug
+    :documentation "If set to T, will start the app in debug mode")
+   (silent
+    :initarg :silent
+    :initform nil
+    :accessor silent
+    :documentation "Do not output informational messages from Clack, if set to T")
+   (use-threads
+    :initarg :use-threads
+    :initform t
+    :accessor use-threads
+    :documentation "Use threads, if set to T"))
+  (:documentation "The jingle app"))
