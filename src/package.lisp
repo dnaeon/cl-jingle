@@ -24,10 +24,9 @@
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-user)
-(defpackage :cl-playground.jingle
-  (:use :cl)
-  (:nicknames :playground.jingle :jingle))
-(in-package :cl-playground.jingle)
+(defpackage :jingle
+  (:use :cl))
+(in-package :jingle)
 
-(cl-reexport:reexport-from :cl-playground.jingle.core)
+(cl-reexport:reexport-from :jingle.core)
 (cl-reexport:reexport-from :ningle :exclude '(:app :<app>))

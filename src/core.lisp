@@ -24,9 +24,8 @@
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-user)
-(defpackage :cl-playground.jingle.core
+(defpackage :jingle.core
   (:use :cl)
-  (:nicknames :playground.jingle.core :jingle.core)
   (:import-from :ningle)
   (:import-from :lack)
   (:import-from :lack.middleware.static)
@@ -61,7 +60,7 @@
    :set-response-header
    :set-response-status
    :with-json-response))
-(in-package :cl-playground.jingle.core)
+(in-package :jingle.core)
 
 (defgeneric start (app)
   (:documentation "Starts the jingle application and serves requests"))

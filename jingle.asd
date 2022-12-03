@@ -23,23 +23,23 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(defpackage :cl-playground-jingle-system
+(defpackage :jingle-system
   (:use :cl :asdf))
-(in-package :cl-playground-jingle-system)
+(in-package :jingle-system)
 
-(defsystem "cl-playground.jingle"
-  :name "cl-playground.jingle"
-  :long-name "cl-playground.jingle"
-  :description "Common Lisp Playground - a wrapper around the ningle web framework"
+(defsystem "jingle"
+  :name "jingle"
+  :long-name "jingle"
+  :description "jingle -- ningle with the bells and whistles"
   :version "0.1.0"
   :author "Marin Atanasov Nikolov <dnaeon@gmail.com>"
   :maintainer "Marin Atanasov Nikolov <dnaeon@gmail.com>"
   :license "BSD 2-Clause"
   :long-description #.(uiop:read-file-string
                        (uiop:subpathname *load-pathname* "README.org"))
-  :homepage "https://github.com/dnaeon/cl-playground"
-  :bug-tracker "https://github.com/dnaeon/cl-playground"
-  :source-control "https://github.com/dnaeon/cl-playground"
+  :homepage "https://github.com/dnaeon/cl-jingle"
+  :bug-tracker "https://github.com/dnaeon/cl-jingle"
+  :source-control "https://github.com/dnaeon/cl-jingle"
   :depends-on (:lack
                :lack-middleware-static
                :lack-middleware-mount
@@ -50,6 +50,6 @@
                :local-time
                :jonathan)
   :components ((:module "jingle"
-                :pathname #P"src/jingle/"
+                :pathname #P"src/"
                 :components ((:file "core")
                              (:file "package" :depends-on ("core"))))))
