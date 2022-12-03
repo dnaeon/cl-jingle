@@ -211,3 +211,21 @@ used from within handlers."
 ningle's response is an instance of LACK.RESPONSE:RESPONSE. This
 function is meant to be used from within handlers."
   (setf (lack.response:response-status ningle:*response*) code))
+
+(defmacro with-json-response (&body body)
+  "A helper macro to be used from within HTTP handlers, which sets the
+Content-Type to application/json, and encodes the last evaluated
+expression of BODY as a JSON object. On error, it will return an
+instance of ERROR-RESPONSE with the message defined by the signalled
+condition."
+  `(handler-case
+       (jonathan:to-json
+        (progn
+          (set-response-header :content-type "application/json")
+          (set-response-status 200)
+          ,@body))
+     (error (condition)
+       (set-response-status 500)
+       (let ((error-message (format nil "~A" condition)))
+         (jonathan:to-json
+          (make-instance 'error-response :message error-message))))))
