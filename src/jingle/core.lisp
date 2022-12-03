@@ -56,3 +56,6 @@
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
 used to query the environment from within the HTTP handlers.")
+
+(defmethod jonathan:%to-json ((timestamp local-time:timestamp))
+  (jonathan:%to-json (local-time:timestamp-to-unix timestamp)))
