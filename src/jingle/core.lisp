@@ -26,9 +26,12 @@
 (in-package :cl-user)
 (defpackage :cl-playground.jingle.core
   (:use :cl)
-  (:nicknames :playground.jingle.core)
+  (:nicknames :playground.jingle.core :jingle.core)
   (:import-from :ningle)
   (:import-from :lack)
+  (:import-from :lack.middleware.static)
+  (:import-from :lack.middleware.mount)
+  (:import-from :lack.app.directory)
   (:import-from :clack)
   (:import-from :local-time)
   (:import-from :jonathan)
@@ -39,6 +42,7 @@
    :configure
    :add-middleware
    :static-path
+   :serve-directory
 
    :error-response
    :error-response-message
@@ -53,6 +57,7 @@
    :debug-mode
    :silent-mode
    :use-threads
+
    :set-response-header
    :set-response-status
    :with-json-response))
@@ -73,6 +78,9 @@ application, before starting it up"))
 
 (defgeneric add-middleware (app middleware)
   (:documentation "Adds a new middleware to the app"))
+
+(defgeneric serve-directory (app path root)
+  (:documentation "Serves the files from the given root directory"))
 
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
@@ -222,6 +230,12 @@ jingle app"
   (add-middleware app
                   (lambda (app)
                     (funcall lack.middleware.static:*lack-middleware-static* app :path path :root root))))
+
+(defmethod serve-directory ((app app) path root)
+  (let ((dir-app (make-instance 'lack.app.directory:lack-app-directory :root root)))
+    (add-middleware app
+                    (lambda (app)
+                      (funcall lack.middleware.mount:*lack-middleware-mount* app path dir-app)))))
 
 (defun set-response-header (name value)
   "Sets the HTTP header with the given NAME to VALUE to be sent to the
