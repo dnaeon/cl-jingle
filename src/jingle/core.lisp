@@ -102,10 +102,10 @@ used to query the environment from within the HTTP handlers.")
     :initform 5000
     :accessor port
     :documentation "The port on which the server will listen to")
-   (debug
-    :initarg :debug
+   (debug-mode
+    :initarg :debug-mode
     :initform t
-    :accessor debug
+    :accessor debug-mode
     :documentation "If set to T, will start the app in debug mode")
    (silent
     :initarg :silent
@@ -156,7 +156,7 @@ jingle app"
                    (http-server-kind http-server-kind)
                    (address address)
                    (port port)
-                   (debug debug)
+                   (debug-mode debug-mode)
                    (silent silent)
                    (use-threads use-threads)) app
     (when http-server
@@ -167,6 +167,15 @@ jingle app"
                            :server http-server-kind
                            :address address
                            :port port
-                           :debug debug
+                           :debug debug-mode
                            :silent silent
                            :use-threads use-threads)))))
+
+;; TODO: Restart cases
+(defmethod stop ((app app))
+  "Stops the jingle application"
+  (with-accessors ((http-server http-server)) app
+    (unless http-server
+      (error "Server is not started"))
+    (clack:stop http-server)
+    (setf http-server nil)))
