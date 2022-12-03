@@ -55,7 +55,7 @@
 
 (defgeneric configure (app)
   (:documentation "Performs any steps needed to configure the
-application, before starting it up")
+application, before starting it up"))
 
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
@@ -148,3 +148,25 @@ jingle app"
           :for middleware :in (reverse middlewares) :do
             (setf wrapped-app (lack:builder middleware wrapped-app))
           :finally (return wrapped-app))))
+
+;; TODO: Restart cases
+(defmethod start ((app app))
+  "Configures the jingle app and starts serving HTTP requests"
+  (with-accessors ((http-server http-server)
+                   (http-server-kind http-server-kind)
+                   (address address)
+                   (port port)
+                   (debug debug)
+                   (silent silent)
+                   (use-threads use-threads)) app
+    (when http-server
+      (error "Server is already started"))
+    (let ((configured-app (configure app)))
+      (setf http-server
+            (clack:clackup configured-app
+                           :server http-server-kind
+                           :address address
+                           :port port
+                           :debug debug
+                           :silent silent
+                           :use-threads use-threads)))))
