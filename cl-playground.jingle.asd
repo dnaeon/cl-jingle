@@ -41,6 +41,9 @@
   :bug-tracker "https://github.com/dnaeon/cl-playground"
   :source-control "https://github.com/dnaeon/cl-playground"
   :depends-on (:lack
+               :lack-middleware-static
+               :lack-middleware-mount
+               :lack-app-directory
                :clack
                :ningle
                :cl-reexport
