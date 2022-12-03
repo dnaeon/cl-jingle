@@ -59,3 +59,15 @@ used to query the environment from within the HTTP handlers.")
 
 (defmethod jonathan:%to-json ((timestamp local-time:timestamp))
   (jonathan:%to-json (local-time:timestamp-to-unix timestamp)))
+
+(defclass error-response ()
+  ((message
+    :initarg :message
+    :initform (error "Must specify error message")
+    :reader error-response-message
+    :documentation "The message to send out as part of the HTTP response"))
+  (:documentation "An HTTP response representing an error"))
+
+(defmethod jonathan:%to-json ((object error-response))
+  (jonathan:with-object
+    (jonathan:write-key-value "message" (error-response-message object))))
