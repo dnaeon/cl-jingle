@@ -36,12 +36,21 @@
    :*env*
    :start
    :stop
+   :configure
+
    :error-response
    :error-response-message
+
    :app
-   :app-server
-   :app-middlewares
    :make-app
+   :http-server
+   :http-server-kind
+   :middlewares
+   :address
+   :port
+   :debug-mode
+   :silent-mode
+   :use-threads
    :set-response-header
    :set-response-status
    :with-json-response))
@@ -107,10 +116,10 @@ used to query the environment from within the HTTP handlers.")
     :initform t
     :accessor debug-mode
     :documentation "If set to T, will start the app in debug mode")
-   (silent
-    :initarg :silent
+   (silent-mode
+    :initarg :silent-mode
     :initform nil
-    :accessor silent
+    :accessor silent-mode
     :documentation "Do not output informational messages from Clack, if set to T")
    (use-threads
     :initarg :use-threads
