@@ -119,6 +119,23 @@ used to query the environment from within the HTTP handlers.")
     :documentation "Use threads, if set to T"))
   (:documentation "The jingle app"))
 
+(defun make-app (&key (middlewares nil)
+                   (server-kind :hunchentoot)
+                   (address "127.0.0.1")
+                   (port 5000)
+                   (debug-mode t)
+                   (silent-mode nil)
+                   (use-threads t))
+  "Creates a new jingle app"
+  (make-instance 'app
+                 :middlewares middlewares
+                 :server-kind server-kind
+                 :address address
+                 :port port
+                 :debug-mode debug-mode
+                 :silent-mode silent-mode
+                 :use-threads use-threads))
+
 (defmethod lack.component:call ((app app) env)
   "Dynamically binds *ENV* to the Lack environment before it hits the
 HTTP handlers.  This way the HTTP handlers can interact with the
@@ -157,7 +174,7 @@ jingle app"
                    (address address)
                    (port port)
                    (debug-mode debug-mode)
-                   (silent silent)
+                   (silent-mode silent-mode)
                    (use-threads use-threads)) app
     (when http-server
       (error "Server is already started"))
@@ -168,7 +185,7 @@ jingle app"
                            :address address
                            :port port
                            :debug debug-mode
-                           :silent silent
+                           :silent silent-mode
                            :use-threads use-threads)))))
 
 ;; TODO: Restart cases
