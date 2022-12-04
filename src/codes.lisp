@@ -28,8 +28,8 @@
   (:use :cl)
   (:export
    :*status-codes*
-   :get-status-code
-   :get-status-code-or-lose
+   :lookup-status-code
+   :lookup-status-code-or-lose
    :explain-status-code))
 (in-package :jingle.codes)
 
@@ -107,16 +107,12 @@
     (:code 511 :key :network-authentication-required :text "Network Authentication Required"))  ;; RFC6585
   "HTTP Status Code Registry from IANA")
 
-(defun get-status-code (value &key (by :code))
-  "Returns the HTTP Status Code associated with VALUE"
+(defun lookup-status-code (value &key (by :code))
+  "Returns the HTTP Status Code associated with VALUE by looking up the registry"
   (find value *status-codes* :test #'equal :key (lambda (item) (getf item by))))
 
-(defun get-status-code-or-lose (value &key (by :code))
-  (let ((item (get-status-code value :by by)))
+(defun lookup-status-code-or-lose (value &key (by :code))
+  (let ((item (lookup-status-code value :by by)))
     (unless item
       (error "Unknown HTTP Status Code ~A" value))
     item))
-
-(defun explain-status-code (code)
-  "Returns the text notes for the HTTP Status Code"
-  (getf (get-status-code code :by :code) :text))
