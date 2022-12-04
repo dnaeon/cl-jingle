@@ -332,11 +332,10 @@ condition."
        (jonathan:to-json
         (progn
           (set-response-header :content-type "application/json")
-          (set-response-status 200)
+          (set-response-status :ok)
           ,@body))
      (error (condition)
-       (set-response-status 500)
+       (set-response-status :internal-server-error)
        (let ((error-message (format nil "~A" condition)))
          (jonathan:to-json
           (make-instance 'error-response :message error-message))))))
-
