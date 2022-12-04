@@ -30,5 +30,6 @@
   (:import-from :ningle))
 (in-package :jingle)
 
+(cl-reexport:reexport-from :jingle.codes)
 (cl-reexport:reexport-from :jingle.core)
 (cl-reexport:reexport-from :ningle :exclude '(:app :<app>))
