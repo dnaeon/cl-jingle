@@ -36,7 +36,8 @@
    :success-code-p
    :redirection-code-p
    :client-error-code-p
-   :server-error-code-p))
+   :server-error-code-p
+   :status-code-kind))
 (in-package :jingle.codes)
 
 (defparameter *status-codes*
@@ -155,3 +156,13 @@ lookup the status code registry for the code."
 (defun server-error-code-p (value)
   "Returns T, if the HTTP Status code is classified as `Server Error'"
   (<= 500 (status-code-number value) 599))
+
+(defun status-code-kind (value)
+  "Returns the kind of the HTTP Status Code"
+  (cond
+    ((informational-code-p value) :informational)
+    ((success-code-p value) :success)
+    ((redirection-code-p value) :redirection)
+    ((client-error-code-p value) :client-error)
+    ((server-error-code-p value) :server-error)
+    (t :unknown)))
