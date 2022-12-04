@@ -30,6 +30,7 @@
    :*status-codes*
    :lookup-status-code
    :lookup-status-code-or-lose
+   :status-code-number
    :explain-status-code))
 (in-package :jingle.codes)
 
@@ -116,3 +117,12 @@
     (unless item
       (error "Unknown HTTP Status Code ~A" value))
     item))
+
+(defun status-code-number (value)
+  "Returns the HTTP Status Code number associated with VALUE. If VALUE
+is a number, then return VALUE. If VALUE is a string or keyword then
+lookup the status code registry for the code."
+  (etypecase value
+    (number value)
+    (string (getf (lookup-status-code-or-lose value :by :text) :code))
+    (keyword (getf (lookup-status-code-or-lose value :by :key) :code))))
