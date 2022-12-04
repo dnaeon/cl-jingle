@@ -299,6 +299,12 @@ ningle's response is an instance of LACK.RESPONSE:RESPONSE. This
 function is meant to be used from within handlers."
   (setf (response-status ningle:*response*) code))
 
+(defun set-response-body (body)
+  "Sets the body for the HTTP response to BODY. Internally ningle's
+response is an instance of LACK.RESPONSE:RESPONSE. This function is
+meant to be used from within handlers."
+  (setf (response-body ningle:*response*) body))
+
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
 Content-Type to application/json, and encodes the last evaluated
