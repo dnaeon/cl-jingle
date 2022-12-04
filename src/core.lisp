@@ -26,6 +26,9 @@
 (in-package :cl-user)
 (defpackage :jingle.core
   (:use :cl)
+  (:import-from
+   :jingle.codes
+   :get-status-code-or-lose)
   (:import-from :ningle)
   (:import-from :lack)
   (:import-from :lack.middleware.static)
@@ -293,11 +296,17 @@ used from within handlers."
         (append (response-headers ningle:*response*)
                 (list name value))))
 
-(defun set-response-status (code)
+(defun set-response-status (value)
   "Sets the status code for the HTTP response to CODE. Internally
 ningle's response is an instance of LACK.RESPONSE:RESPONSE. This
-function is meant to be used from within handlers."
-  (setf (response-status ningle:*response*) code))
+function is meant to be used from within handlers. VALUE may be a
+number, a keyword or a string representing the HTTP Status Code"
+  (let* ((search-by (etypecase value
+                      (keyword :key)
+                      (number :code)
+                      (string :text)))
+         (item (get-status-code-or-lose value :by search-by)))
+    (setf (response-status ningle:*response*) (getf item :code))))
 
 (defun set-response-body (body)
   "Sets the body for the HTTP response to BODY. Internally ningle's
