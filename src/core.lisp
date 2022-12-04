@@ -28,7 +28,7 @@
   (:use :cl)
   (:import-from
    :jingle.codes
-   :get-status-code-or-lose)
+   :status-code-number)
   (:import-from :ningle)
   (:import-from :lack)
   (:import-from :lack.middleware.static)
@@ -303,12 +303,7 @@ used from within handlers."
 ningle's response is an instance of LACK.RESPONSE:RESPONSE. This
 function is meant to be used from within handlers. VALUE may be a
 number, a keyword or a string representing the HTTP Status Code"
-  (let* ((search-by (etypecase value
-                      (keyword :key)
-                      (number :code)
-                      (string :text)))
-         (item (get-status-code-or-lose value :by search-by)))
-    (setf (response-status ningle:*response*) (getf item :code))))
+  (setf (response-status ningle:*response*) (status-code-number value)))
 
 (defun set-response-body (body)
   "Sets the body for the HTTP response to BODY. Internally ningle's
