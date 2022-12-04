@@ -94,7 +94,9 @@
 
    :set-response-header
    :set-response-status
+   :set-response-body
    :with-json-response
+   :redirect
 
    ;; Re-exports from LACK.REQUEST
    :request-env
@@ -313,6 +315,12 @@ number, a keyword or a string representing the HTTP Status Code"
 response is an instance of LACK.RESPONSE:RESPONSE. This function is
 meant to be used from within handlers."
   (setf (response-body ningle:*response*) body))
+
+(defun redirect (location &optional (code :moved-permanently))
+  "Sets the HTTP status code to CODE and Location header to LOCATION"
+  (set-response-header :location location)
+  (set-response-status code)
+  nil)
 
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
