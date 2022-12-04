@@ -126,3 +126,7 @@ lookup the status code registry for the code."
     (number value)
     (string (getf (lookup-status-code-or-lose value :by :text) :code))
     (keyword (getf (lookup-status-code-or-lose value :by :key) :code))))
+
+(defun explain-status-code (value)
+  "Returns the text notes for the HTTP Status Code by looking up the registry"
+  (getf (lookup-status-code (status-code-number value) :by :code) :text))
