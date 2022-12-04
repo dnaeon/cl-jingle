@@ -30,6 +30,38 @@
   (:import-from :lack)
   (:import-from :lack.middleware.static)
   (:import-from :lack.middleware.mount)
+  (:import-from
+   :lack.request
+   :request-env
+   :request-method
+   :request-script-name
+   :request-path-info
+   :request-server-name
+   :request-server-port
+   :request-server-protocol
+   :request-uri
+   :request-uri-scheme
+   :request-remote-addr
+   :request-remote-port
+   :request-query-string
+   :request-raw-body
+   :request-content-length
+   :request-content-type
+   :request-headers
+   :request-cookies
+   :request-body-parameters
+   :request-query-parameters
+   :request-parameters
+   :request-content
+   :request-has-body-p
+   :request-accept
+   :request-accepts-p)
+  (:import-from
+   :lack.response
+   :response-status
+   :response-headers
+   :response-body
+   :response-set-cookies)
   (:import-from :lack.app.directory)
   (:import-from :clack)
   (:import-from :local-time)
@@ -59,7 +91,39 @@
 
    :set-response-header
    :set-response-status
-   :with-json-response))
+   :with-json-response
+
+   ;; Re-exports from LACK.REQUEST
+   :request-env
+   :request-method
+   :request-script-name
+   :request-path-info
+   :request-server-name
+   :request-server-port
+   :request-server-protocol
+   :request-uri
+   :request-uri-scheme
+   :request-remote-addr
+   :request-remote-port
+   :request-query-string
+   :request-raw-body
+   :request-content-length
+   :request-content-type
+   :request-headers
+   :request-cookies
+   :request-body-parameters
+   :request-query-parameters
+   :request-parameters
+   :request-content
+   :request-has-body-p
+   :request-accept
+   :request-accepts-p
+
+   ;; Re-exports from LACK.RESPONSE
+   :response-status
+   :response-headers
+   :response-body
+   :response-set-cookies))
 (in-package :jingle.core)
 
 (defgeneric start (app)
@@ -163,21 +227,7 @@ used to query the environment from within the HTTP handlers.")
 (defmethod lack.component:call ((app app) env)
   "Dynamically binds *ENV* to the Lack environment before it hits the
 HTTP handlers.  This way the HTTP handlers can interact with the
-surrounding environment exposed by Lack.
-
-As of now, December 2022, a regular ningle handler does not have
-access to the Lack environment, which prevents HTTP handlers from
-using additional metadata present in the environment.
-
-The Lack environment is something that is also used by middlewares, so
-making that available to HTTP handlers allows our handlers to share
-additional metadata, which may be pushed by middlewares.
-
-See [1], [2] and [3] for more details.
-
-[1]: https://dnaeon.github.io/common-lisp-web-dev-ningle-middleware/
-[2]: https://github.com/fukamachi/ningle/issues/41
-[3]: https://github.com/fukamachi/lack#the-environment"
+surrounding environment exposed by Lack by using JINGLE.CORE:*ENV*"
   (let ((*env* env))
     (call-next-method)))
 
@@ -190,7 +240,6 @@ jingle app"
             (setf wrapped-app (lack:builder middleware wrapped-app))
           :finally (return wrapped-app))))
 
-;; TODO: Restart cases
 (defmethod start ((app app))
   "Configures the jingle app and starts serving HTTP requests"
   (with-accessors ((http-server http-server)
@@ -212,7 +261,6 @@ jingle app"
                            :silent silent-mode
                            :use-threads use-threads)))))
 
-;; TODO: Restart cases
 (defmethod stop ((app app))
   "Stops the jingle application"
   (with-accessors ((http-server http-server)) app
@@ -241,15 +289,15 @@ jingle app"
 client as part of the HTTP response. Internally ningle's response is
 an instance of LACK.RESPONSE:RESPONSE. This function is meant to be
 used from within handlers."
-  (setf (lack.response:response-headers ningle:*response*)
-        (append (lack.response:response-headers ningle:*response*)
+  (setf (response-headers ningle:*response*)
+        (append (response-headers ningle:*response*)
                 (list name value))))
 
 (defun set-response-status (code)
   "Sets the status code for the HTTP response to CODE. Internally
 ningle's response is an instance of LACK.RESPONSE:RESPONSE. This
 function is meant to be used from within handlers."
-  (setf (lack.response:response-status ningle:*response*) code))
+  (setf (response-status ningle:*response*) code))
 
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
@@ -268,3 +316,4 @@ condition."
        (let ((error-message (format nil "~A" condition)))
          (jonathan:to-json
           (make-instance 'error-response :message error-message))))))
+

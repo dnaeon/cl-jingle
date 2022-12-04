@@ -25,7 +25,9 @@
 
 (in-package :cl-user)
 (defpackage :jingle
-  (:use :cl))
+  (:use :cl)
+  (:import-from :jingle.core)
+  (:import-from :ningle))
 (in-package :jingle)
 
 (cl-reexport:reexport-from :jingle.core)
