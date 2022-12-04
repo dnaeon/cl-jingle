@@ -31,7 +31,12 @@
    :lookup-status-code
    :lookup-status-code-or-lose
    :status-code-number
-   :explain-status-code))
+   :explain-status-code
+   :informational-code-p
+   :success-code-p
+   :redirection-code-p
+   :client-error-code-p
+   :server-error-code-p))
 (in-package :jingle.codes)
 
 (defparameter *status-codes*
@@ -130,3 +135,23 @@ lookup the status code registry for the code."
 (defun explain-status-code (value)
   "Returns the text notes for the HTTP Status Code by looking up the registry"
   (getf (lookup-status-code (status-code-number value) :by :code) :text))
+
+(defun informational-code-p (value)
+  "Returns T, if the HTTP Status code is classified as `Informational'"
+  (<= 100 (status-code-number value) 199))
+
+(defun success-code-p (value)
+  "Returns T, if the HTTP Status code is classified as `Success'"
+  (<= 200 (status-code-number value) 299))
+
+(defun redirection-code-p (value)
+  "Returns T, if the HTTP Status code is classified as `Redirection'"
+  (<= 300 (status-code-number value) 399))
+
+(defun client-error-code-p (value)
+  "Returns T, if the HTTP Status code is classified as `Client Error'"
+  (<= 400 (status-code-number value) 499))
+
+(defun server-error-code-p (value)
+  "Returns T, if the HTTP Status code is classified as `Server Error'"
+  (<= 500 (status-code-number value) 599))
