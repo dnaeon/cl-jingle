@@ -74,7 +74,7 @@
    :start
    :stop
    :configure
-   :add-middleware
+   :install-middleware
    :static-path
    :serve-directory
 
@@ -146,7 +146,7 @@ application, before starting it up"))
 (defgeneric static-path (app path root)
   (:documentation "Adds a static path to serve files from"))
 
-(defgeneric add-middleware (app middleware)
+(defgeneric install-middleware (app middleware)
   (:documentation "Adds a new middleware to the app"))
 
 (defgeneric serve-directory (app path root)
@@ -276,18 +276,18 @@ jingle app"
     (clack:stop http-server)
     (setf http-server nil)))
 
-(defmethod add-middleware ((app app) middleware)
+(defmethod install-middleware ((app app) middleware)
   (with-accessors ((middlewares middlewares)) app
     (setf middlewares (append middlewares (list middleware)))))
 
 (defmethod static-path ((app app) path root)
-  (add-middleware app
+  (install-middleware app
                   (lambda (app)
                     (funcall lack.middleware.static:*lack-middleware-static* app :path path :root root))))
 
 (defmethod serve-directory ((app app) path root)
   (let ((dir-app (make-instance 'lack.app.directory:lack-app-directory :root root)))
-    (add-middleware app
+    (install-middleware app
                     (lambda (app)
                       (funcall lack.middleware.mount:*lack-middleware-mount* app path dir-app)))))
 
