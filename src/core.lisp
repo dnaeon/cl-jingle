@@ -99,6 +99,8 @@
    :redirect
    :get-request-header
    :get-response-header
+   :request-header-is-set-p
+   :response-header-is-set-p
 
    ;; Re-exports from LACK.REQUEST
    :request-env
@@ -339,6 +341,20 @@ the requested response header NAME, and the second one is T or NIL,
 depending on whether the header was set."
   (let ((header-values (%get-response-header-values name)))
     (values header-values (not (null header-values)))))
+
+(defun request-header-is-set-p (name)
+  "Predicate for testing whether a given request header is set"
+  (multiple-value-bind (values exists)
+      (get-request-header name)
+    (declare (ignore values))
+    exists))
+
+(defun response-header-is-set-p (name)
+  "Predicate for testing whether a given response header is set"
+  (multiple-value-bind (values exists)
+      (get-response-header name)
+    (declare (ignore values))
+    exists))
 
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
