@@ -97,6 +97,8 @@
    :set-response-body
    :with-json-response
    :redirect
+   :get-request-header
+   :get-response-header
 
    ;; Re-exports from LACK.REQUEST
    :request-env
@@ -316,6 +318,27 @@ meant to be used from within handlers."
   (set-response-header :location location)
   (set-response-status code)
   nil)
+
+(defun get-request-header (name)
+  "Returns two values, first one is a list representing the values of
+the requested header NAME, and the second is T or NIL, depending on
+whether the header was set."
+  ;; LACK.REQUEST:REQUEST-HEADERS stores the headers in lower-case
+  (multiple-value-bind (value exists)
+      (gethash (string-downcase name) (request-headers ningle:*request*))
+    (values (uiop:split-string value :separator '(#\,)) exists)))
+
+(defun %get-response-header-values (name)
+  "Collects all values for the response header with the given NAME"
+  (loop :for (header-name header-value) :on (response-headers ningle:*response*) :by #'cddr
+        :when (string= name header-name) :collect header-value))
+
+(defun get-response-header (name)
+  "Returns two values, first one is a list representing the values of
+the requested response header NAME, and the second one is T or NIL,
+depending on whether the header was set."
+  (let ((header-values (%get-response-header-values name)))
+    (values header-values (not (null header-values)))))
 
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
