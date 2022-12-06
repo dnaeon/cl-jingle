@@ -30,7 +30,7 @@
 (defsystem "jingle"
   :name "jingle"
   :long-name "jingle"
-  :description "jingle -- ningle with the bells and whistles"
+  :description "jingle -- ningle with bells and whistles"
   :version "0.1.0"
   :author "Marin Atanasov Nikolov <dnaeon@gmail.com>"
   :maintainer "Marin Atanasov Nikolov <dnaeon@gmail.com>"
@@ -40,7 +40,8 @@
   :homepage "https://github.com/dnaeon/cl-jingle"
   :bug-tracker "https://github.com/dnaeon/cl-jingle"
   :source-control "https://github.com/dnaeon/cl-jingle"
-  :depends-on (:lack
+  :depends-on (:str
+               :lack
                :lack-middleware-static
                :lack-middleware-mount
                :lack-app-directory
