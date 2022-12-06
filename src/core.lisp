@@ -294,15 +294,18 @@ jingle app"
 middleware for serving static files at PATH from the given ROOT"
   (install-middleware app
                   (lambda (app)
-                    (funcall lack.middleware.static:*lack-middleware-static* app :path path :root root))))
+                    (funcall
+                     lack.middleware.static:*lack-middleware-static* app
+                     :path (uiop:native-namestring path) :root root))))
 
 (defmethod serve-directory ((app app) path root)
   "Mounts the LACK.APP.DIRECTORY:LACK-APP-DIRECTORY app at the given
 PATH, serving files from ROOT"
-  (let ((dir-app (make-instance 'lack.app.directory:lack-app-directory :root root)))
+  (let ((dir-app (make-instance 'lack.app.directory:lack-app-directory :root (uiop:native-namestring root))))
     (install-middleware app
                     (lambda (app)
-                      (funcall lack.middleware.mount:*lack-middleware-mount* app path dir-app)))))
+                      (funcall
+                       lack.middleware.mount:*lack-middleware-mount* app path dir-app)))))
 
 (defun set-response-header (name value)
   "Sets the HTTP header with the given NAME to VALUE to be sent to the
