@@ -76,6 +76,7 @@
    :stop
    :configure
    :install-middleware
+   :clear-middlewares
    :static-path
    :serve-directory
 
@@ -152,6 +153,9 @@ application, before starting it up"))
 
 (defgeneric install-middleware (app middleware)
   (:documentation "Adds a new middleware to the app"))
+
+(defgeneric clear-middlewares (app)
+  (:documentation "Removes all middlewares from the app"))
 
 (defgeneric serve-directory (app path root)
   (:documentation "Serves the files from the given root directory"))
@@ -288,6 +292,10 @@ jingle app"
   "Appends the given MIDDLEWARE to the APP"
   (with-accessors ((middlewares middlewares)) app
     (setf middlewares (append middlewares (list middleware)))))
+
+(defmethod clear-middlewares ((app app))
+  "Removes all installed middlewares from the app"
+  (setf (middlewares app) nil))
 
 (defmethod static-path ((app app) path root)
   "Installs the LACK.MIDDLEWARE.STATIC:*LACK-MIDDLEWARE-STATIC*
