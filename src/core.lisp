@@ -28,7 +28,8 @@
   (:use :cl)
   (:import-from
    :jingle.codes
-   :status-code-number)
+   :status-code-number
+   :explain-status-code)
   (:import-from :ningle)
   (:import-from :lack)
   (:import-from :lack.middleware.static)
@@ -97,6 +98,7 @@
    :set-response-body
    :with-json-response
    :redirect
+   :redirect-route
    :get-request-header
    :get-response-header
    :request-header-is-set-p
@@ -153,6 +155,10 @@ application, before starting it up"))
 
 (defgeneric serve-directory (app path root)
   (:documentation "Serves the files from the given root directory"))
+
+(defgeneric redirect-route (app path location &key code)
+  (:documentation "Creates a redirection route for the APP at the given PATH to
+LOCATION"))
 
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
@@ -315,12 +321,6 @@ response is an instance of LACK.RESPONSE:RESPONSE. This function is
 meant to be used from within handlers."
   (setf (response-body ningle:*response*) body))
 
-(defun redirect (location &optional (code :moved-permanently))
-  "Sets the HTTP status code to CODE and Location header to LOCATION"
-  (set-response-header :location location)
-  (set-response-status code)
-  nil)
-
 (defun get-request-header (name)
   "Returns two values, first one is a list representing the values of
 the requested header NAME, and the second is T or NIL, depending on
@@ -355,6 +355,30 @@ depending on whether the header was set."
       (get-response-header name)
     (declare (ignore values))
     exists))
+
+(defun redirect (location &optional (code :moved-permanently))
+  "Sets the HTTP status code to CODE and Location header to LOCATION"
+  (set-response-header :location location)
+  (set-response-status code)
+  nil)
+
+(defmethod redirect-route ((app app) path location &key (code :moved-permanently))
+  (setf (ningle:route app path :method :get)
+        (lambda (params)
+          (declare (ignore params))
+          ;; RFC 7231 says that we should send a payload with a short
+          ;; hypertext note with a hyperlink to the different URI.
+          ;; Send the body, only if Content-Type is not set already.
+          (unless (response-header-is-set-p :content-type)
+            (let ((body (format nil "<h1><a href=\"~A\">~A</a></h1>" location (explain-status-code code))))
+              (set-response-header :content-type "text/html; charset=utf-8")
+              (set-response-body body)))
+          (redirect location code)))
+  (setf (ningle:route app path :method :head)
+        (lambda (params)
+          (declare (ignore params))
+          (set-response-header :content-type "text/html; charset=utf-8")
+          (redirect location code))))
 
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
