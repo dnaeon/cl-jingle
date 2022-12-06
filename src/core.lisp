@@ -301,20 +301,21 @@ middleware for serving static files at PATH from the given ROOT"
 (defmethod serve-directory ((app app) path root)
   "Mounts the LACK.APP.DIRECTORY:LACK-APP-DIRECTORY app at the given
 PATH, serving files from ROOT"
-  ;; The ROOT *should not* end with a slash, otherwise the
-  ;; LACK-APP-DIRECTORY doesn't work as expected. Also, the PATH
-  ;; *should* end with a slash, otherwise things don't work as
-  ;; expected.
-  (let* ((path (if (not (str:ends-with-p "/" path))
-                   (str:concat path "/")
+  ;; The ROOT *MUST* end with a slash, otherwise the
+  ;; LACK-APP-DIRECTORY doesn't work as expected.
+  ;; Also, the PATH *MUST NOT* end with a slash, but the client *MUST*
+  ;; access it using a slash at the end, otherwise the links to the
+  ;; files are broken. Weird, right? Let's try to fix that.
+  (let* ((path (if (str:ends-with-p "/" path)
+                   (subseq path 0 (1- (length path)))
                    path))
          (separator (uiop:directory-separator-for-host))
          (root-native (uiop:native-namestring root))
-         (root-length (length root-native))
-         (root (if (str:ends-with-p (string separator) root-native)
-                   (subseq root-native 0 (1- root-length))
+         (root (if (not (str:ends-with-p (string separator) root-native))
+                   (str:concat root-native (string separator))
                    root))
          (dir-app (make-instance 'lack.app.directory:lack-app-directory :root root)))
+    ;; Mount the LACK-APP-DIRECTORY app
     (install-middleware app
                     (lambda (app)
                       (funcall
