@@ -285,15 +285,20 @@ jingle app"
     (setf http-server nil)))
 
 (defmethod install-middleware ((app app) middleware)
+  "Appends the given MIDDLEWARE to the APP"
   (with-accessors ((middlewares middlewares)) app
     (setf middlewares (append middlewares (list middleware)))))
 
 (defmethod static-path ((app app) path root)
+  "Installs the LACK.MIDDLEWARE.STATIC:*LACK-MIDDLEWARE-STATIC*
+middleware for serving static files at PATH from the given ROOT"
   (install-middleware app
                   (lambda (app)
                     (funcall lack.middleware.static:*lack-middleware-static* app :path path :root root))))
 
 (defmethod serve-directory ((app app) path root)
+  "Mounts the LACK.APP.DIRECTORY:LACK-APP-DIRECTORY app at the given
+PATH, serving files from ROOT"
   (let ((dir-app (make-instance 'lack.app.directory:lack-app-directory :root root)))
     (install-middleware app
                     (lambda (app)
