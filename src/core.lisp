@@ -104,6 +104,7 @@
    :get-response-header
    :request-header-is-set-p
    :response-header-is-set-p
+   :get-request-param
 
    ;; Re-exports from LACK.REQUEST
    :request-env
@@ -427,3 +428,9 @@ condition."
        (let ((error-message (format nil "~A" condition)))
          (jonathan:to-json
           (make-instance 'error-response :message error-message))))))
+
+(defun get-request-param (params name &optional default)
+  "Returns the value associated with the NAME param. If NAME param is
+ not set at all, returns DEFAULT."
+  (let ((value (cdr (assoc name params :test #'equal))))
+    (or value default)))
