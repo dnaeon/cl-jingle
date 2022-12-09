@@ -105,6 +105,7 @@
    :response-header-is-set-p
    :get-request-param
    :with-json-response
+   :with-html-response
    :with-request-params
 
    ;; Re-exports from LACK.REQUEST
@@ -388,6 +389,12 @@ depending on whether the header was set."
     (declare (ignore values))
     exists))
 
+(defun get-request-param (params name &optional default)
+  "Returns the value associated with the NAME param. If NAME param is
+ not set at all, returns DEFAULT."
+  (let ((value (cdr (assoc name params :test #'equal))))
+    (or value default)))
+
 (defun redirect (location &optional (code :moved-permanently))
   "Sets the HTTP status code to CODE and Location header to LOCATION"
   (set-response-header :location location)
@@ -412,6 +419,31 @@ depending on whether the header was set."
           (set-response-header :content-type "text/html; charset=utf-8")
           (redirect location code))))
 
+(defmacro with-html-response (&body body)
+  "A helper macro to be used from within HTTP handlers, which sets the
+Content-Type to text/html. On error, it will return a response with
+status code 500 (Internal Server Error) and a short HTML body
+describing the condition, which was signalled."
+  (let ((error-message-sym (gensym)))
+    `(handler-case
+         (progn
+           (set-response-header :content-type "text/html; charset=utf-8")
+           (set-response-status :ok)
+           ,@body)
+       (error (condition)
+         (set-response-status :internal-server-error)
+         (let ((,error-message-sym (format nil "~A" condition)))
+           (format nil "
+<html>
+  <head>
+    <title>Internal Server Error</title>
+  </head>
+  <body>
+    <h1>Internal Server Error</h1>
+    <h2>~A</h2>
+  </body>
+</html>" ,error-message-sym))))))
+
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
 Content-Type to application/json, and encodes the last evaluated
@@ -430,12 +462,6 @@ condition."
          (let ((,error-message-sym (format nil "~A" condition)))
            (jonathan:to-json
             (make-instance 'error-response :message ,error-message-sym)))))))
-
-(defun get-request-param (params name &optional default)
-  "Returns the value associated with the NAME param. If NAME param is
- not set at all, returns DEFAULT."
-  (let ((value (cdr (assoc name params :test #'equal))))
-    (or value default)))
 
 (defmacro with-request-params (param-items params-alist &body body)
   "A helper macro which binds symbols to values from the request
