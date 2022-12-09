@@ -417,17 +417,18 @@ Content-Type to application/json, and encodes the last evaluated
 expression of BODY as a JSON object. On error, it will return an
 instance of ERROR-RESPONSE with the message defined by the signalled
 condition."
-  `(handler-case
-       (jonathan:to-json
-        (progn
-          (set-response-header :content-type "application/json")
-          (set-response-status :ok)
-          ,@body))
-     (error (condition)
-       (set-response-status :internal-server-error)
-       (let ((error-message (format nil "~A" condition)))
+  (let ((error-message-sym (gensym)))
+    `(handler-case
          (jonathan:to-json
-          (make-instance 'error-response :message error-message))))))
+          (progn
+            (set-response-header :content-type "application/json")
+            (set-response-status :ok)
+            ,@body))
+       (error (condition)
+         (set-response-status :internal-server-error)
+         (let ((,error-message-sym (format nil "~A" condition)))
+           (jonathan:to-json
+            (make-instance 'error-response :message ,error-message-sym)))))))
 
 (defun get-request-param (params name &optional default)
   "Returns the value associated with the NAME param. If NAME param is
