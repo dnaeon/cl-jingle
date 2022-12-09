@@ -72,7 +72,7 @@ Next thing we need to do is register our handlers.
 
 #+begin_src lisp
   CL-USER> (setf (jingle:route *app* "/hello") #'hello-handler)
-  CL-USER> (setf (jingle:route *app* "/echo") #'echo-handler)
+  CL-USER> (setf (jingle:route *app* "/echo" :method :post) #'echo-handler)
 #+end_src
 
 And now we can start the app.
