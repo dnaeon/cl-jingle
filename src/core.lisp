@@ -97,7 +97,6 @@
    :set-response-header
    :set-response-status
    :set-response-body
-   :with-json-response
    :redirect
    :redirect-route
    :get-request-header
@@ -105,6 +104,8 @@
    :request-header-is-set-p
    :response-header-is-set-p
    :get-request-param
+   :with-json-response
+   :with-request-params
 
    ;; Re-exports from LACK.REQUEST
    :request-env
@@ -435,3 +436,18 @@ condition."
  not set at all, returns DEFAULT."
   (let ((value (cdr (assoc name params :test #'equal))))
     (or value default)))
+
+(defmacro with-request-params (param-items params-alist &body body)
+  "A helper macro which binds symbols to values from the request
+ parameters, and evalutes BODY.
+
+PARAM-ITEMS is a list of (SYMBOL PARAM-NAME DEFAULT-VALUE) lists,
+which represent the symbols to be bound while evaluating the BODY.
+
+PARAMS-ALIST is the alist passed to the jingle handler."
+  `(let ,(loop :for item :in param-items
+               :for sym-var = (first item)
+               :for param-name = (second item)
+               :for default-val = (third item)
+               :collect (list sym-var `(get-request-param ,params-alist ,param-name ,default-val)))
+     ,@body))
