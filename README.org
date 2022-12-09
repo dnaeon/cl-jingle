@@ -1,3 +1,639 @@
-* jingle -- ningle with the bells and whistles
+* jingle
 
-TODO: Fill me in
+=jingle= is [[https://github.com/fukamachi/ningle][ningle]], but with bells and whistles.
+
+* Requirements
+
+- [[https://www.quicklisp.org/beta/][Quicklisp]]
+
+* Installation
+
+=jingle= is not yet in Quicklisp, so in order to install it you will need to
+clone the repo and add it to your [[https://www.quicklisp.org/beta/faq.html][Quicklisp local-projects]].
+
+#+begin_src shell
+  cd ~/quicklisp/local-projects
+  git clone https://github.com/dnaeon/jingle.git
+#+end_src
+
+* Usage
+
+Start up your REPL and load the =JINGLE= system.
+
+#+begin_src lisp
+  CL-USER> (ql:quickload :jingle)
+  To load "jingle":
+    Load 1 ASDF system:
+      jingle
+  ; Loading "jingle"
+  ..................................................
+  [package jingle.core].............................
+  [package jingle]
+
+  (:JINGLE)
+#+end_src
+
+First thing we need to do is to create a new =JINGLE:APP= instance.
+
+#+begin_src lisp
+  CL-USER> (defparameter *app* (jingle:make-app))
+  *APP*
+#+end_src
+
+When creating a new instance of =JINGLE:APP= you can provide
+additional keyword args, which specify what HTTP server to use,
+address to bind to, the port to listen on, middlewares, etc..
+
+A very simple HTTP handler, which returns =Hello, World!= looks like
+this.
+
+#+begin_src lisp
+  (defun hello-handler (params)
+    (declare (ignore params))
+    "Hello, World!")
+#+end_src
+
+The following is an example of an HTTP handler which echoes back the
+payload you send to it.
+
+#+begin_src lisp
+  (defun echo-handler (params)
+    "A simple handler which echoes back the payload you send to it"
+    (declare (ignore params))
+    (jingle:set-response-header :content-type (jingle:request-content-type jingle:*request*))
+    (jingle:set-response-header :content-length (jingle:request-content-length jingle:*request*))
+    (maphash (lambda (k v)
+               (jingle:set-response-header k v))
+             (jingle:request-headers jingle:*request*))
+    (jingle:request-content jingle:*request*))
+#+end_src
+
+Next thing we need to do is register our handlers.
+
+#+begin_src lisp
+  CL-USER> (setf (jingle:route *app* "/hello") #'hello-handler)
+  CL-USER> (setf (jingle:route *app* "/echo") #'echo-handler)
+#+end_src
+
+And now we can start the app.
+
+#+begin_src lisp
+  CL-USER> (jingle:start *app*)
+#+end_src
+
+Trying out our endpoints using =curl(1)= gives us this result.
+
+#+begin_src shell
+  $ curl -vvv --get http://localhost:5000/hello
+  *   Trying 127.0.0.1:5000...
+  * Connected to localhost (127.0.0.1) port 5000 (#0)
+  > GET /hello HTTP/1.1
+  > Host: localhost:5000
+  > User-Agent: curl/7.86.0
+  > Accept: */*
+  > 
+  * Mark bundle as not supporting multiuse
+  < HTTP/1.1 200 OK
+  < Date: Fri, 09 Dec 2022 09:46:13 GMT
+  < Server: Hunchentoot 1.3.0
+  < Transfer-Encoding: chunked
+  < Content-Type: text/html; charset=utf-8
+  < 
+  * Connection #0 to host localhost left intact
+  Hello, World!
+#+end_src
+
+And this is our echo handler.
+
+#+begin_src shell
+  $ curl -v -s --data '{"foo": "bar", "baz": "42"}' -H "My-Header: SomeValue" -H "Content-Type: application/json" -X POST http://localhost:5000/echo
+  *   Trying 127.0.0.1:5000...
+  * Connected to localhost (127.0.0.1) port 5000 (#0)
+  > POST /echo HTTP/1.1
+  > Host: localhost:5000
+  > User-Agent: curl/7.86.0
+  > Accept: */*
+  > My-Header: SomeValue
+  > Content-Type: application/json
+  > Content-Length: 27
+  > 
+  * Mark bundle as not supporting multiuse
+  < HTTP/1.1 200 OK
+  < Date: Fri, 09 Dec 2022 13:57:30 GMT
+  < Server: Hunchentoot 1.3.0
+  < My-Header: SomeValue
+  < Accept: */*
+  < User-Agent: curl/7.86.0
+  < Host: localhost:5000
+  < Content-Length: 27
+  < Content-Type: application/json
+  < 
+  * Connection #0 to host localhost left intact
+  {"foo": "bar", "baz": "42"}
+#+end_src
+
+In order to stop the application, evaluate the following expression.
+
+#+begin_src lisp
+  CL-USER> (jingle:stop *app*)
+#+end_src
+
+** Handlers
+
+Handlers are regular [[https://github.com/fukamachi/ningle][ningle]] routes, which accept a single argument,
+representing the request parameters.
+
+** Environment
+
+=jingle= exports the special variable =JINGLE:*ENV*= which is
+dynamically bound to the request environment of [[https://github.com/fukamachi/lack][Lack]]. You can query
+the environment directly from =jingle= and don't have to worry about
+where the environment is coming from.
+
+** Headers
+
+=jingle= provides the =JINGLE:SET-RESPONSE-HEADER= function for
+setting up HTTP response headers.
+
+A simple handler which sets the =Content-Type= header to =text/plain=
+looks like this.
+
+#+begin_src lisp
+  (defun hello (params)
+    (declare (ignore params))
+    (jingle:set-response-header :content-type "text/plain")
+    "Hello, World!")
+#+end_src
+
+Other useful functions which operate on HTTP headers are
+=JINGLE:GET-REQUEST-HEADER= and =JINGLE:GET-RESPONSE-HEADER=, which
+retrieve the value of the HTTP header associated with the request and
+response respectively.
+
+** Status Codes
+
+The =JINGLE:SET-RESPONSE-STATUS= function sets the Status Code for the
+HTTP Response.
+
+#+begin_src lisp
+  (defun foo-handler (params)
+    (declare (ignore params))
+    (jingle:set-response-status :accepted)
+    "Task accepted")
+#+end_src
+
+Arguments passed to =JINGLE:SET-RESPONSE-STATUS= may be a number
+(e.g. =400=), a keyword (e.g. =:bad-request=), or a string (e.g. =Bad
+Request=) of the status code. The following three expressions are
+equivalent, and they all set the HTTP Status Code to =400 (Bad
+Request)=.
+
+#+begin_src lisp
+  (jingle:set-response-status 400)
+  (jingle:set-response-status :bad-request)
+  (jingle:set-response-status "Bad Request")
+#+end_src
+
+Another useful function operating on HTTP Status Codes is
+=JINGLE:EXPLAIN-STATUS-CODE=.
+
+#+begin_src lisp
+  CL-USER> (jingle:explain-status-code 400)
+  "Bad Request"
+  CL-USER> (jingle:explain-status-code :bad-request)
+  "Bad Request"
+#+end_src
+
+=JINGLE:STATUS-CODE-KIND= returns the kind of the HTTP Status Code as
+classified by [[https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml][IANA]], e.g.
+
+#+begin_src lisp
+  CL-USER> (jingle:status-code-kind 400)
+  :CLIENT-ERROR
+  CL-USER> (jingle:status-code-kind :unauthorized)
+  :CLIENT-ERROR
+  CL-USER> (jingle:status-code-kind :internal-server-error)
+  :SERVER-ERROR
+  CL-USER> (jingle:status-code-kind :moved-permanently)
+  :REDIRECTION
+  CL-USER> (jingle:status-code-kind 100)
+  :INFORMATIONAL
+  CL-USER> (jingle:status-code-kind "Accepted")
+  :SUCCESS
+#+end_src
+
+Other HTTP status code predicates you may find useful are
+=JINGLE:INFORMATIONAL-CODE-P=, =JINGLE:SUCCESS-CODE-P=,
+=JINGLE:REDIRECTION-CODE-P=, =JINGLE:CLIENT-ERROR-CODE-P= and
+=JINGLE:SERVER-ERROR-CODE-P=.
+
+** Static Resources
+
+Static resources can be served by adding them using
+=JINGLE:STATIC-PATH= method, e.g.
+
+#+begin_src lisp
+  (jingle:static-path *app* "/static/" "~/public_html/")
+#+end_src
+
+You can serve static resources from multiple directories as well. In
+order to do that simply install them, before you start up the app.
+
+#+begin_src lisp
+  (jingle:static-path *app* "/static-1/" "/path/to/static-1/")
+  (jingle:static-path *app* "/static-2/" "/path/to/static-2/")
+  (jingle:static-path *app* "/static-3/" "/path/to/static-3/")
+#+end_src
+
+** Directory Browser
+
+The =JINGLE:SERVE-DIRECTORY= method installs a middleware which allows
+you to browse the contents of a given path. For example the following
+code exposes the =~/Documents= and =~/Projects= directories.
+
+#+begin_src lisp
+  (jingle:serve-directory *app* "/docs" "~/Documents")
+  (jingle:serve-directory *app* "/projects" "~/Projects")
+#+end_src
+
+When accessing the directories from the browser make sure to add a
+slash at the end of the paths. For example the above directories will
+have to accessed at http://localhost:5000/docs/ and
+http://localhost:5000/projects/ respectively, if you are using the
+default HTTP port when starting up the app.
+
+** Middlewares
+
+You can use regular [[https://github.com/fukamachi/lack#middlewares][Lack middlewares]] with =jingle= as well. Simply
+install them using the =JINGLE:INSTALL-MIDDLEWARE= method.
+
+The following simple middleware pushes a new property to the request
+environment, which can be queried by the HTTP handlers.
+
+First, implement the middleware.
+
+#+begin_src lisp
+  (defun my-middleware (app)
+    "A custom middleware which pushes a new property to the request
+  environment and exposes it to HTTP handlers."
+    (lambda (env)
+      (setf (getf env :my-middleware/message) "my middleware message")
+      (funcall app env)))
+#+end_src
+
+Then we create a =JINGLE:APP= and install it.
+
+#+begin_src lisp
+  CL-USER> (defparameter *app* (jingle:make-app))
+  CL-USER> (jingle:install-middleware *app* #'my-middleware)
+#+end_src
+
+An example handler which uses the message placed by our middleware may
+look like this.
+
+#+begin_src lisp
+  (defun my-handler (params)
+    (declare (ignore params))
+    (jingle:set-response-status :ok)
+    (jingle:set-response-header :content-type "text/plain")
+    (getf jingle:*env* :my-middleware/message))
+#+end_src
+
+Finally we have to register our handler and start the app.
+
+#+begin_src lisp
+  CL-USER> (setf (jingle:route *app* "/my-middleware") #'my-handler)
+  CL-USER> (jingle:start *app*)
+#+end_src
+
+Trying it out using =curl(1)= returns the following response.
+
+#+begin_src shell
+  $ curl -vvv --get http://localhost:5000/my-middleware
+  *   Trying 127.0.0.1:5000...
+  * Connected to localhost (127.0.0.1) port 5000 (#0)
+  > GET /my-middleware HTTP/1.1
+  > Host: localhost:5000
+  > User-Agent: curl/7.86.0
+  > Accept: */*
+  > 
+  * Mark bundle as not supporting multiuse
+  < HTTP/1.1 200 OK
+  < Date: Fri, 09 Dec 2022 11:42:17 GMT
+  < Server: Hunchentoot 1.3.0
+  < Transfer-Encoding: chunked
+  < Content-Type: text/plain
+  < 
+  * Connection #0 to host localhost left intact
+  my middleware message
+#+end_src
+
+Here's an example which uses Lack's =accesslog= middleware and how to
+use it with =jingle=. First, load the respective system, which
+provides the middleware, and then simply install it into the =jingle=
+app.
+
+#+begin_src lisp
+  CL-USER> (ql:quickload :lack-middleware-accesslog)
+  CL-USER> (jingle:install-middleware *app* lack.middleware.accesslog:*lack-middleware-accesslog*)
+#+end_src
+
+Search for other middlewares you can already use in Quicklisp, e.g.
+
+#+begin_src lisp
+  CL-USER> (ql:system-apropos "lack-middleware")
+#+end_src
+
+You can use middlewares to push metadata into the environment for HTTP
+handlers to use. For example, if your HTTP handlers need to read from
+and write to a database, you may want to create a middleware, which
+pushes a =CL-DBI= connection into the environment, so that HTTP
+handlers can use it, when needed.
+
+In order to clear out all installed middlewares you can use the
+=JINGLE:CLEAR-MIDDLEWARES= method, e.g.
+
+#+begin_src lisp
+  CL-USER> (jingle:clear-middlewares *app*)
+#+end_src
+
+** Redirects
+
+Redirects in =jingle= are handled by the =JINGLE:REDIRECT= function.
+
+An example HTTP handler which redirects to [[https://lispcookbook.github.io/cl-cookbook/][The Common Lisp Cookbook]]
+looks like this.
+
+#+begin_src lisp
+  (defun to-the-cookbook (params)
+    (declare (ignore params))
+    (jingle:redirect "https://lispcookbook.github.io/cl-cookbook/"))
+#+end_src
+
+Register the HTTP handler and start the app.
+
+#+begin_src lisp
+  CL-USER> (setf (jingle:route *app* "/cookbook") #'to-the-cookbook)
+  CL-USER> (jingle:start *app*)
+#+end_src
+
+Navigate to http://localhost:5000/cookbook and you will be
+automatically redirected.
+
+There is also another way for defining redirects using
+=JINGLE:REDIRECT-ROUTE=. The following example shows how to install
+two redirect routes to your =jingle= app, without having to
+explicitely define the HTTP handlers in advance.
+
+#+begin_src lisp
+  CL-USER> (jingle:redirect-route *app* "/sbcl" "https://sbcl.org/")
+  CL-USER> (jingle:redirect-route *app* "/ecl" "https://ecl.common-lisp.dev/")
+#+end_src
+
+** Request Parameters
+
+The =JINGLE:GET-REQUEST-PARAM= function may be used within HTTP
+handlers to get the value associated with a given parameter.
+
+Suppose we have the following example HTTP handler, which returns
+information about supported products and is exposed via the
+=/api/v1/product/:name= endpoint.
+
+#+begin_src lisp
+  (defparameter *products*
+    '((:|id| 1 :|name| "foo")
+      (:|id| 2 :|name| "bar")
+      (:|id| 3 :|name| "baz")
+      (:|id| 4 :|name| "qux")
+      (:|id| 5 :|name| "foo v2")
+      (:|id| 6 :|name| "bar v3")
+      (:|id| 7 :|name| "baz v4")
+      (:|id| 8 :|name| "qux v5"))
+    "The list of our supported products")
+
+  (defun find-product-by-name (name)
+    "Finds a product by name"
+    (find name
+          *products*
+          :key (lambda (item) (getf item :|name|))
+          :test #'string=))
+
+  (defun product-handler (params)
+    "Handles requests for /api/v1/product/:name requests"
+    (jingle:set-response-status :ok)
+    (jingle:set-response-header :content-type "application/json")
+    (let* ((name (jingle:get-request-param params :name))
+           (product (find-product-by-name name)))
+      (if product
+          (jonathan:to-json product)
+          (progn
+            (jingle:set-response-status :not-found)
+            (jonathan:to-json '(:|error| "Product not found"))))))
+#+end_src
+
+Register the HTTP handler and start the app.
+
+#+begin_src lisp
+  CL-USER> (setf (jingle:route *app* "/api/v1/product/:name") #'product-handler)
+  CL-USER> (jingle:start *app*)
+#+end_src
+
+Testing it out with different product names using =curl(1)=.
+
+#+begin_src shell
+  $ curl -s --get http://localhost:5000/api/v1/product/foo | jq '.'
+  {
+    "id": 1,
+    "name": "foo"
+  }
+
+  $ curl -s --get http://localhost:5000/api/v1/product/bar | jq '.'
+  {
+    "id": 2,
+    "name": "bar"
+  }
+
+  $ curl -s --get http://localhost:5000/api/v1/product/unknown | jq '.'
+  {
+    "error": "Product not found"
+  }
+#+end_src
+
+Another example HTTP handler which returns a list of products in a
+paginated way, exposed via the =/api/v1/products= endpoint.
+
+#+begin_src lisp
+  (defun take (items from to)
+    "A helper function to return the ITEMS between FROM and TO range"
+    (let* ((len (length items))
+           (to (if (>= to len) len to)))
+      (if (>= from len)
+          nil
+          (subseq items from to))))
+
+  (defun products-handler (params)
+    "Handles requests for /api/v1/product and returns a page of products"
+    (jingle:set-response-status :ok)
+    (jingle:set-response-header :content-type "application/json")
+    ;; Parse the `FROM' and `TO' query parameters. Use default values of
+    ;; 0 and 5 for the params.
+    (let ((from (parse-integer (jingle:get-request-param params "from" "0") :junk-allowed t))
+          (to (parse-integer (jingle:get-request-param params "to" "5") :junk-allowed t)))
+      (cond
+        ((or (null from) (null to)) (jingle:set-response-status :bad-request) nil) ;; NIL added here for the response body
+        ((or (minusp from) (minusp to)) (jingle:set-response-status :bad-request) nil) ;; NIL added here for the response body
+        (t (jonathan:to-json (take *products* from to))))))
+#+end_src
+
+Register the new API endpoint.
+
+#+begin_src lisp
+  CL-USER> (setf (jingle:route *app* "/api/v1/products") #'products-handler)
+#+end_src
+
+Testing it out using =curl(1)= with different values for =from= and
+=to= query params.
+
+#+begin_src shell
+  $ curl -s --get 'http://localhost:5000/api/v1/products?from=0&to=2' | jq '.'
+  [
+    {
+      "id": 1,
+      "name": "foo"
+    },
+    {
+      "id": 2,
+      "name": "bar"
+    }
+  ]
+
+  $ curl -s --get 'http://localhost:5000/api/v1/products?from=2&to=4' | jq '.'
+  [
+    {
+      "id": 3,
+      "name": "baz"
+    },
+    {
+      "id": 4,
+      "name": "qux"
+    }
+  ]
+#+end_src
+
+Another way to retrieve request parameter values is to use the
+=JINGLE:WITH-REQUEST-PARAMS= macro. The previous example handler can
+be rewritten this way.
+
+#+begin_src lisp
+  (defun products-handler (params)
+    (jingle:with-json-response
+      (jingle:with-request-params ((from-param "from" "0") (to-param "to" "5")) params
+        ;; Parse the query parameters and make sure we've got good values
+        (let ((from (parse-integer from-param :junk-allowed t))
+              (to (parse-integer to-param :junk-allowed t)))
+          (cond
+            ((or (null from) (null to))
+             (jingle:set-response-status :bad-request)
+             nil) ;; NIL added here for the response body
+            ((or (minusp from) (minusp to))
+             (jingle:set-response-status :bad-request)
+             nil) ;; NIL added here for the response body
+            (t (take *products* from to)))))))
+#+end_src
+
+** Macros
+
+The following helper macros are available in =jingle=.
+
+- =JINGLE:WITH-JSON-RESPONSE=
+- =JINGLE:WITH-REQUEST-PARAMS=
+- =JINGLE:WITH-HTML-RESPONSE=
+
+The =JINGLE:WITH-JSON-RESPONSE= macro sets up various HTTP headers
+such as =Content-Type= to =application/json= for you and evaluates the
+body. The last evaluated expression from the body is encoded as a JSON
+object using =JONATHAN:TO-JSON=.
+
+The following example uses =LOCAL-TIME= and =JONATHAN= systems, so
+make sure you have them loaded already.
+
+#+begin_src lisp
+  (defclass ping-response ()
+    ((message
+      :initarg :message
+      :initform "pong"
+      :reader ping-response-message
+      :documentation "Message to send as part of the response")
+     (timestamp
+      :initarg :timestamp
+      :initform (local-time:now)
+      :reader ping-response-timestamp))
+    (:documentation "A response sent as part of a PING request"))
+
+  (defmethod jonathan:%to-json ((object ping-response))
+    (jonathan:with-object
+      (jonathan:write-key-value "message" (ping-response-message object))
+      (jonathan:write-key-value "timestamp" (ping-response-timestamp object))))
+
+  (defun ping-handler (params)
+    (declare (ignore params))
+    (jingle:with-json-response
+      (make-instance 'ping-response)))
+#+end_src
+
+Register the HTTP handler and start the app.
+
+#+begin_src lisp
+  CL-USER> (setf (jingle:route *app* "/api/v1/ping") #'ping-handler)
+  CL-USER> (jingle:start *app*)
+#+end_src
+
+Trying it you should see results similar to the ones below.
+
+#+begin_src shell
+  $ curl -s --get http://localhost:5000/api/v1/ping | jq '.'
+  {
+    "message": "pong",
+    "timestamp": 1670593969
+  }
+
+  $ curl -s --get http://localhost:5000/api/v1/ping | jq '.'
+  {
+    "message": "pong",
+    "timestamp": 1670593974
+  }
+
+  $ curl -s --get http://localhost:5000/api/v1/ping | jq '.'
+  {
+    "message": "pong",
+    "timestamp": 1670593976
+  }
+#+end_src
+
+The =JINGLE:WITH-REQUEST-PARAMS= macro provides an easy way to bind
+symbols to request params from within HTTP handlers.
+
+#+begin_src lisp
+  (defun foo-handler (params)
+    (jingle:with-request-params ((foo "foo") (bar "bar")) params
+      ;; Use FOO and BAR params in order to ...
+      ...))
+#+end_src
+
+The =JINGLE:WITH-HTML-RESPONSE= is similar to
+=JINGLE:WITH-JSON-RESPONSE=, but sets up the the response with a
+=Content-Type: text/html; charset=utf-8= header and sends a short HTML
+body in case of any errors.
+
+* Contributing
+
+=jingle= is hosted on [[https://github.com/dnaeon/jingle][Github]]. Please contribute by reporting issues,
+suggesting features or by sending patches using pull requests.
+
+* License
+
+This project is Open Source and licensed under the [[http://opensource.org/licenses/BSD-2-Clause][BSD License]].
+
+* Authors
+
+- Marin Atanasov Nikolov <dnaeon@gmail.com>
