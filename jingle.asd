@@ -53,5 +53,6 @@
   :components ((:module "jingle"
                 :pathname #P"src/"
                 :components ((:file "codes")
-                             (:file "core")
-                             (:file "package" :depends-on ("core"))))))
+                             (:file "utils")
+                             (:file "core" :depends-on ("codes" "utils"))
+                             (:file "package" :depends-on ("codes" "utils" "core"))))))

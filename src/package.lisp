@@ -31,5 +31,42 @@
 (in-package :jingle)
 
 (cl-reexport:reexport-from :jingle.codes)
+(cl-reexport:reexport-from :jingle.utils)
 (cl-reexport:reexport-from :jingle.core)
+
+;; Re-exports from NINGLE
 (cl-reexport:reexport-from :ningle :exclude '(:app :<app>))
+
+;; Re-export from LACK.REQUEST
+(cl-reexport:reexport-from
+ :lack.request :include '(:request-env
+                          :request-method
+                          :request-script-name
+                          :request-path-info
+                          :request-server-name
+                          :request-server-port
+                          :request-server-protocol
+                          :request-uri
+                          :request-uri-scheme
+                          :request-remote-addr
+                          :request-remote-port
+                          :request-query-string
+                          :request-raw-body
+                          :request-content-length
+                          :request-content-type
+                          :request-headers
+                          :request-cookies
+                          :request-body-parameters
+                          :request-query-parameters
+                          :request-parameters
+                          :request-content
+                          :request-has-body-p
+                          :request-accept
+                          :request-accepts-p))
+
+;; Re-export from LACK.RESPONSE
+(cl-reexport:reexport-from
+ :lack.response :include '(:response-status
+                           :response-headers
+                           :response-body
+                           :response-set-cookies))
