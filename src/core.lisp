@@ -32,8 +32,9 @@
    :explain-status-code)
   (:import-from
    :jingle.utils
-   :set-response-header
    :set-response-body
+   :set-response-header
+   :set-response-status
    :response-header-is-set-p
    :redirect)
   (:import-from :lack)
@@ -55,6 +56,11 @@
    :clear-middlewares
    :serve-directory
    :redirect-route
+   :handle-error
+   ;; Conditions
+   :base-http-error
+   :http-error-code
+   :http-error-body
    ;; App class and accessors
    :app
    :make-app
@@ -93,6 +99,34 @@ application, before starting it up"))
 (defgeneric redirect-route (app path location &key code)
   (:documentation "Creates a redirection route for the APP at the given PATH to
 LOCATION"))
+
+(defgeneric handle-error (condition)
+  (:documentation "Handles the CONDITION by setting up appropriate HTTP response to send
+to the client"))
+
+(define-condition base-http-error (simple-error)
+  ((code
+    :initarg :code
+    :initform (error "Must specify the HTTP Status Code")
+    :accessor http-error-code
+    :documentation "The HTTP Status Code")
+   (body
+    :initarg :body
+    :initform nil
+    :accessor http-error-body
+    :documentation "The body to send as part of the HTTP response"))
+  (:documentation "Base condition class for HTTP errors")
+  (:report (lambda (condition stream)
+             (with-slots (code) condition
+               (let* ((code (status-code-number code))
+                      (text (or (explain-status-code code) "Unknown")))
+               (format stream "~A (~A)" code text))))))
+
+(defmethod handle-error ((error base-http-error))
+  (with-slots (code body) error
+    (set-response-header :content-type "text/plain")
+    (set-response-status code)
+    (set-response-body body)))
 
 (defparameter *env* nil
   "*ENV* will be dynamically bound to the Lack environment. It can be
