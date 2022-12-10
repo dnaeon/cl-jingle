@@ -195,9 +195,15 @@ used to query the environment from within the HTTP handlers.")
 (defmethod lack.component:call ((app app) env)
   "Dynamically binds *ENV* to the Lack environment before it hits the
 HTTP handlers.  This way the HTTP handlers can interact with the
-surrounding environment exposed by Lack by using JINGLE.CORE:*ENV*"
+surrounding environment exposed by Lack by using JINGLE.CORE:*ENV*.
+
+If a condition is signalled and the condition is a sub-class of
+JINGLE:BASE-HTTP-ERROR, then invoke JINGLE:HANDLE-ERROR for setting up
+an appropriate HTTP response for the client."
   (let ((*env* env))
-    (call-next-method)))
+    (handler-case (call-next-method)
+      (base-http-error (condition)
+        (handle-error condition)))))
 
 (defmethod configure ((app app))
   "Sets up the final application by applying all middlewares to our
