@@ -113,13 +113,14 @@ In case of invalid input it will signal a 400 (Bad Request) error"
    (timestamp
     :initarg :timestamp
     :initform (local-time:now)
-    :documentation "Timestamp of the message")
+    :documentation "Timestamp of the message"))
   (:documentation "A response sent as part of a PING request"))
 
 (defmethod jonathan:%to-json ((object ping-response))
-  (jonathan:with-object
-    (jonathan:write-key-value "message" (ping-response-message object))
-    (jonathan:write-key-value "timestamp" (ping-response-timestamp object))))
+  (with-slots (message timestamp) object
+    (jonathan:with-object
+      (jonathan:write-key-value "message" message)
+      (jonathan:write-key-value "timestamp" timestamp))))
 
 (defun ping-handler (params)
   "Handles requests for /api/v1/ping"
