@@ -419,7 +419,7 @@ information about supported products and is exposed via the
           :test #'string=))
 
   (defun product-handler (params)
-    "Handles requests for /api/v1/product/:name requests"
+    "Handles requests for /api/v1/product/:name endpoint"
     (jingle:set-response-status :ok)
     (jingle:set-response-header :content-type "application/json")
     (let* ((name (jingle:get-request-param params :name))
@@ -621,9 +621,210 @@ symbols to request params from within HTTP handlers.
 #+end_src
 
 The =JINGLE:WITH-HTML-RESPONSE= is similar to
-=JINGLE:WITH-JSON-RESPONSE=, but sets up the the response with a
-=Content-Type: text/html; charset=utf-8= header and sends a short HTML
-body in case of any errors.
+=JINGLE:WITH-JSON-RESPONSE=, but sets up the response with a
+=Content-Type: text/html; charset=utf-8= header.
+
+** Error Handling
+
+The =JINGLE:BASE-HTTP-ERROR= condition may be used as the base for
+user-defined conditions.
+
+If a condition is signalled from within HTTP handlers and the
+condition is a sub-class of =JINGLE:BASE-HTTP-ERROR=, then the
+=JINGLE:HANDLE-ERROR= method will be invoked.
+
+The purpose of =JINGLE:HANDLE-ERROR= is to handle the error and set up
+an appropriate HTTP response, which will be returned to the client.
+
+The rest of this section describes how to create and use custom errors
+for a very simple REST API. The API we will develop provides the
+following endpoints.
+
+#+begin_src shell
+  GET /api/v1/product        => Returns a list of products (supports `from` and `to` query params)
+  GET /api/v1/product/:name  => Returns a product by name, if found
+#+end_src
+
+The error responses which we will return to clients would look like this.
+
+#+begin_src javascript
+  {
+      "error": "<Reason for the error response>"
+  }
+#+end_src
+
+First we will define our =API-ERROR= condition, and then define the
+=JINGLE:HANDLE-ERROR= method on it, so that we return consistent error
+responses to our API clients.
+
+#+begin_src lisp
+  (define-condition api-error (jingle:base-http-error)
+    ()
+    (:documentation "Represents a condition which will be signalled on API errors"))
+
+  (defmethod jingle:handle-error ((error api-error))
+    "Handles the error and sets up the HTTP error response to be sent to clients"
+    (with-accessors ((code jingle:http-error-code)
+                     (body jingle:http-error-body)) error
+      (jingle:set-response-status code)
+      (jingle:set-response-header :content-type "application/json")
+      (jonathan:to-json (list :|error| body))))
+#+end_src
+
+Next, we will implement some helper functions that signal common
+client-error HTTP responses.
+
+#+begin_src lisp
+  (defun throw-not-found-error (message)
+    "Throws a 404 (Not Found) HTTP response"
+    (error 'api-error :code :not-found :body message))
+
+  (defun throw-bad-request-error (message)
+    "Throws a 400 (Bad Request) HTTP response"
+    (error 'api-error :code :bad-request :body message))
+#+end_src
+
+Having our conditions and error-related functions we will also define
+another helper function, which will be responsible for parsing HTTP
+query parameters as integers, which we will use in our handlers.
+
+#+begin_src lisp
+  (defun get-int-param (params name &optional default)
+    "Gets the NAME parameter from PARAMS and parses it as an integer.
+  In case of invalid input it will signal a 400 (Bad Request) error"
+    (let ((raw (jingle:get-request-param params name default)))
+      (typecase raw
+        (number raw)
+        (null (throw-bad-request-error (format nil "missing value for `~A` param" name)))
+        (string (let ((parsed (parse-integer raw :junk-allowed t)))
+                  (unless parsed
+                    (throw-bad-request-error (format nil "invalid value for `~A` param" name)))
+                  parsed))
+        (t (throw-bad-request-error (format nil "unsupported value for `~A` param" name))))))
+#+end_src
+
+We will be building on top of the /products/ API, which was shown in a
+previous section. The =*PRODUCTS*= var will be our "database" in this
+simple API.
+
+#+begin_src lisp
+  (defparameter *products*
+    '((:|id| 1 :|name| "foo")
+      (:|id| 2 :|name| "bar")
+      (:|id| 3 :|name| "baz")
+      (:|id| 4 :|name| "qux")
+      (:|id| 5 :|name| "foo v2")
+      (:|id| 6 :|name| "bar v3")
+      (:|id| 7 :|name| "baz v4")
+      (:|id| 8 :|name| "qux v5"))
+    "The list of our supported products")
+
+  (defun find-product-by-name (name)
+    "Finds a product by name"
+    (find name
+          *products*
+          :key (lambda (item) (getf item :|name|))
+          :test #'string=))
+
+  (defun take (items from to)
+    "A helper function to return the ITEMS between FROM and TO range"
+    (let* ((len (length items))
+           (to (if (>= to len) len to)))
+      (if (>= from len)
+          nil
+          (subseq items from to))))
+#+end_src
+
+And these are the actual HTTP handlers, which will accept and handle
+client requests.
+
+#+begin_src lisp
+  (defun get-product-handler (params)
+    "Handles requests for the /api/v1/product/:name endpoint"
+    (jingle:with-json-response
+      (let* ((name (jingle:get-request-param params :name))
+             (product (find-product-by-name name)))
+        (unless product
+          (throw-not-found-error "product not found"))
+        product)))
+
+  (defun get-products-page-handler (params)
+    "Handles requests for the /api/v1/product endpoint"
+    (jingle:with-json-response
+      (let ((from (get-int-param params "from" 0))
+            (to (get-int-param params "to" 2)))
+        (when (or (minusp from) (minusp to))
+          (throw-bad-request-error "`from` and `to` must be positive"))
+        (take *products* from to))))
+#+end_src
+
+Finally, we will create our =JINGLE:APP=, register our handlers and
+start serving HTTP requests.
+
+#+begin_src lisp
+  CL-USER> (defparameter *app* (jingle:make-app))
+  CL-USER> (setf (jingle:route *app* "/api/v1/product") #'get-products-page-handler)
+  CL-USER> (setf (jingle:route *app* "/api/v1/product/:name") #'get-product-handler)
+  CL-USER> (jingle:start *app*)
+#+end_src
+
+Time to test things out.
+
+#+begin_src shell
+  # Getting a page of products using default `from` and `to` params
+  $ curl -s --get 'http://localhost:5000/api/v1/product' | jq '.'
+  [
+    {
+      "id": 1,
+      "name": "foo"
+    },
+    {
+      "id": 2,
+      "name": "bar"
+    }
+  ]
+
+  # Getting next page of products
+  $ curl -s --get 'http://localhost:5000/api/v1/product?from=2&to=4' | jq '.'
+  [
+    {
+      "id": 3,
+      "name": "baz"
+    },
+    {
+      "id": 4,
+      "name": "qux"
+    }
+  ]
+
+  # Passing invalid query params
+  $ curl -s --get 'http://localhost:5000/api/v1/product?from=bad-value' | jq '.'
+  {
+    "error": "invalid value for `from` param"
+  }
+
+  # Passing negative values
+  $ curl -s --get 'http://localhost:5000/api/v1/product?to=-42' | jq '.'
+  {
+    "error": "`from` and `to` must be positive"
+  }
+
+  # Getting a product by name
+  $ curl -s --get 'http://localhost:5000/api/v1/product/foo' | jq '.'
+  {
+    "id": 1,
+    "name": "foo"
+  }
+
+  # Getting a non-existing product
+  $ curl -s --get 'http://localhost:5000/api/v1/product/unknown' | jq '.'
+  {
+    "error": "product not found"
+  }
+#+end_src
+
+Great, things work as expected and our API clients will receive
+consistent error responses with the proper HTTP status codes set.
 
 * Contributing
 
