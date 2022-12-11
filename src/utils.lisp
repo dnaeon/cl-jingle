@@ -141,53 +141,17 @@ PARAMS-ALIST is the alist passed to the jingle handler."
 Content-Type to text/html. On error, it will return a response with
 status code 500 (Internal Server Error) and a short HTML body
 describing the condition, which was signalled."
-  (let ((error-message-sym (gensym)))
-    `(handler-case
-         (progn
-           (set-response-header :content-type "text/html; charset=utf-8")
-           (set-response-status :ok)
-           ,@body)
-       (error (condition)
-         (set-response-status :internal-server-error)
-         (let ((,error-message-sym (format nil "~A" condition)))
-           (format nil "
-<html>
-  <head>
-    <title>Internal Server Error</title>
-  </head>
-  <body>
-    <h1>Internal Server Error</h1>
-    <h2>~A</h2>
-  </body>
-</html>" ,error-message-sym))))))
-
-(defclass error-response ()
-  ((message
-    :initarg :message
-    :initform (error "Must specify error message")
-    :reader error-response-message
-    :documentation "The message to send out as part of the HTTP response"))
-  (:documentation "An HTTP response representing an error"))
-
-(defmethod jonathan:%to-json ((object error-response))
-  (jonathan:with-object
-    (jonathan:write-key-value "message" (error-response-message object))))
+  `(progn
+     (set-response-header :content-type "text/html; charset=utf-8")
+     (set-response-status :ok)
+     ,@body))
 
 (defmacro with-json-response (&body body)
   "A helper macro to be used from within HTTP handlers, which sets the
 Content-Type to application/json, and encodes the last evaluated
-expression of BODY as a JSON object. On error, it will return an
-instance of ERROR-RESPONSE with the message defined by the signalled
-condition."
-  (let ((error-message-sym (gensym)))
-    `(handler-case
-         (jonathan:to-json
-          (progn
-            (set-response-header :content-type "application/json")
-            (set-response-status :ok)
-            ,@body))
-       (error (condition)
-         (set-response-status :internal-server-error)
-         (let ((,error-message-sym (format nil "~A" condition)))
-           (jonathan:to-json
-            (make-instance 'error-response :message ,error-message-sym)))))))
+expression of BODY as a JSON object."
+  `(jonathan:to-json
+    (progn
+      (set-response-header :content-type "application/json")
+      (set-response-status :ok)
+      ,@body)))
