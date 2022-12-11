@@ -71,7 +71,7 @@
    :port
    :debug-mode
    :silent-mode
-   :use-threads))
+   :use-thread))
 (in-package :jingle.core)
 
 (defgeneric start (app)
@@ -168,11 +168,11 @@ used to query the environment from within the HTTP handlers.")
     :initform nil
     :accessor silent-mode
     :documentation "Do not output informational messages from Clack, if set to T")
-   (use-threads
-    :initarg :use-threads
+   (use-thread
+    :initarg :use-thread
     :initform t
-    :accessor use-threads
-    :documentation "Use threads, if set to T"))
+    :accessor use-thread
+    :documentation "Start server in a separate thread, if set to T"))
   (:documentation "The jingle app"))
 
 (defun make-app (&key (middlewares nil)
@@ -181,7 +181,7 @@ used to query the environment from within the HTTP handlers.")
                    (port 5000)
                    (debug-mode t)
                    (silent-mode nil)
-                   (use-threads t))
+                   (use-thread t))
   "Creates a new jingle app"
   (make-instance 'app
                  :middlewares middlewares
@@ -190,7 +190,7 @@ used to query the environment from within the HTTP handlers.")
                  :port port
                  :debug-mode debug-mode
                  :silent-mode silent-mode
-                 :use-threads use-threads))
+                 :use-thread use-thread))
 
 (defmethod lack.component:call ((app app) env)
   "Dynamically binds *ENV* to the Lack environment before it hits the
@@ -222,7 +222,7 @@ jingle app"
                    (port port)
                    (debug-mode debug-mode)
                    (silent-mode silent-mode)
-                   (use-threads use-threads)) app
+                   (use-thread use-thread)) app
     (when http-server
       (error "Server is already started"))
     (let ((configured-app (configure app)))
@@ -233,7 +233,7 @@ jingle app"
                            :port port
                            :debug debug-mode
                            :silent silent-mode
-                           :use-threads use-threads)))))
+                           :use-thread use-thread)))))
 
 (defmethod stop ((app app))
   "Stops the jingle application"
