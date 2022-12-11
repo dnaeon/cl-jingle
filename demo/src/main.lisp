@@ -33,10 +33,36 @@
   (:export :main))
 (in-package :jingle.demo.main)
 
+(defun print-doc/command ()
+  "Returns a command which will print the app's documentation"
+  (clingon:make-command
+   :name "print-doc"
+   :description "print the documentation in Markdown format"
+   :usage ""
+   :handler (lambda (cmd)
+              ;; Print the documentation starting from the parent
+              ;; command, so we can traverse all sub-commands in the
+              ;; tree.
+              (clingon:print-documentation :markdown (clingon:command-parent cmd) t))))
+
+(defun zsh-completions/command ()
+  "Returns a command for generating Zsh completion script"
+  (clingon:make-command
+   :name "zsh-completions"
+   :description "generate the Zsh completion script"
+   :usage ""
+   :handler (lambda (cmd)
+              ;; Use the parent command when generating the completions,
+              ;; so that we can traverse all sub-commands in the tree.
+              (let ((parent (clingon:command-parent cmd)))
+                (clingon:print-documentation :zsh-completions parent t)))))
+
 (defun top-level/sub-commands ()
   "Returns the list of sub-commands for the top-level command"
   (list
-   (serve/command)))
+   (serve/command)
+   (print-doc/command)
+   (zsh-completions/command)))
 
 (defun top-level/handler (cmd)
   "The handler for the top-level command"
