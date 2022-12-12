@@ -61,6 +61,7 @@
                                :use-thread nil
                                :debug-mode nil)))
     (jingle:serve-directory app "/api/docs" swagger-ui-dist)
+    (jingle:redirect-route app "/" "/api/docs/")
     ;; Register the API endpoints for our app and start it up
     ;; SIGINT signals are already handled by CLACK:CLACKUP
     (jingle.demo.api:register-urls app)
