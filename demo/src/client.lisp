@@ -40,7 +40,8 @@
    :ping
    :get-product-by-id
    :get-products-page
-   :delete-product-by-id))
+   :delete-product-by-id
+   :create-new-product))
 (in-package :jingle.demo.client)
 
 (defclass client ()
@@ -96,6 +97,15 @@
     (jonathan:parse (dexador:delete uri))))
 
 (defmethod get-products-page ((client client) &key (from 0) (to 2))
+  "Fetches a page of products"
   (let* ((params `(("from" . ,from) ("to" . ,to)))
          (uri (make-api-uri client "/product" :query-params params)))
     (jonathan:parse (dexador:get uri))))
+
+(defmethod create-new-product ((client client) name)
+  "Creates a new product with the given name"
+  (let* ((payload (jonathan:to-json (list :|name| name)))
+         (uri (make-api-uri client "/product"))
+         (headers '(("Accept" . "application/json")
+                    ("Content-Type" . "application/json"))))
+    (jonathan:parse (dexador:post uri :headers headers :content payload))))
