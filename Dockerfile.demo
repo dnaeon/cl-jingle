@@ -1,0 +1,11 @@
+FROM clfoundation/sbcl:2.2.1 AS builder
+
+ENV QUICKLISP_ADD_TO_INIT_FILE=true
+ENV QUICKLISP_DIST_VERSION=latest
+
+WORKDIR /root/quicklisp/local-projects/cl-jingle
+COPY . .
+
+RUN /usr/local/bin/install-quicklisp && make demo
+
+ENTRYPOINT ["./bin/jingle-demo"]
