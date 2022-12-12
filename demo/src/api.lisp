@@ -112,7 +112,8 @@ In case of invalid input it will signal a 400 (Bad Request) error"
       (when (or (minusp from) (minusp to))
         (throw-bad-request-error "`from` and `to` must be positive"))
       (take
-       (sort *products* #'< :key (lambda (item) (getf item :|id|)))
+       (setf *products*
+             (sort *products* #'< :key (lambda (item) (getf item :|id|))))
        from to))))
 
 (defclass ping-response ()
