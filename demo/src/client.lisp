@@ -37,7 +37,8 @@
    :client-api-prefix
    :make-client
    :make-api-uri
-   :ping))
+   :ping
+   :get-product-by-id))
 (in-package :jingle.demo.client)
 
 (defclass client ()
@@ -76,5 +77,12 @@
                  :query query-params))
 
 (defmethod ping ((client client))
+  "Ping the remote API endpoint"
   (let ((uri (make-api-uri client "/ping")))
+    (jonathan:parse (dexador:get uri))))
+
+(defmethod get-product-by-id ((client client) id)
+  "Fetches a product by id"
+  (let* ((path (format nil "/product/~A" id))
+         (uri (make-api-uri client path)))
     (jonathan:parse (dexador:get uri))))
