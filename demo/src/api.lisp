@@ -74,9 +74,9 @@ In case of invalid input it will signal a 400 (Bad Request) error"
     (:|id| 4 :|name| "qux"))
   "The `database' used by our API")
 
-(defun find-product-by-id (name)
-  "Finds a product by name"
-  (find name
+(defun find-product-by-id (id)
+  "Finds a product by id"
+  (find id
         *products*
         :key (lambda (item) (getf item :|id|))
         :test #'=))
@@ -92,8 +92,8 @@ In case of invalid input it will signal a 400 (Bad Request) error"
 (defun get-product-by-id-handler (params)
   "Handles requests for the /api/v1/product/:id endpoint"
   (jingle:with-json-response
-    (let* ((name (get-int-param params :id))
-           (product (find-product-by-id name)))
+    (let* ((id (get-int-param params :id))
+           (product (find-product-by-id id)))
       (unless product
         (throw-not-found-error "product not found"))
       product)))
@@ -130,10 +130,21 @@ In case of invalid input it will signal a 400 (Bad Request) error"
   (jingle:with-json-response
     (make-instance 'ping-response)))
 
+(defun delete-product-by-id-handler (params)
+  "Handles requests for DELETE /api/v1/product/:id endpoint"
+  (jingle:with-json-response
+    (let* ((id (get-int-param params :id))
+           (product (find-product-by-id id)))
+      (unless product
+        (throw-not-found-error "product not found"))
+      (setf *products* (remove id *products* :test #'= :key (lambda (item) (getf item :|id|))))
+      product)))
+
 (defparameter *urls*
-  `((:path "/api/v1/ping" :handler ,#'ping-handler :method :get)
-    (:path "/api/v1/product" :handler ,#'get-products-page-handler :method :get)
-    (:path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler :method :get))
+  `((:method :GET :path "/api/v1/ping" :handler ,#'ping-handler)
+    (:method :GET :path "/api/v1/product" :handler ,#'get-products-page-handler)
+    (:method :GET :path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler)
+    (:method :DELETE :path "/api/v1/product/:id" :handler ,#'delete-product-by-id-handler))
   "The URLs map of our API")
 
 (defun register-urls (app)
