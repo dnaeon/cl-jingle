@@ -47,7 +47,8 @@
                :jonathan
                :dexador
                :quri
-               :cl-ascii-table)
+               :cl-ascii-table
+               :babel)
   :components ((:module "demo"
                 :pathname #P"demo/src/"
                 :serial t

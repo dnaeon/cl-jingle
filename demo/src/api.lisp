@@ -67,6 +67,12 @@ In case of invalid input it will signal a 400 (Bad Request) error"
                 parsed))
       (t (throw-bad-request-error (format nil "unsupported value for `~A` param" name))))))
 
+(defun decode-json-or-throw-bad-request (content)
+  "Decodes the given CONTENT or signals a Bad Request condition on errors"
+  (handler-case (jonathan:parse content)
+    (error ()
+      (throw-bad-request-error "invalid JSON content"))))
+
 (defparameter *products*
   '((:|id| 1 :|name| "foo")
     (:|id| 2 :|name| "bar")
@@ -131,7 +137,9 @@ In case of invalid input it will signal a 400 (Bad Request) error"
     (make-instance 'ping-response)))
 
 (defun delete-product-by-id-handler (params)
-  "Handles requests for DELETE /api/v1/product/:id endpoint"
+  "Handles requests for DELETE /api/v1/product/:id endpoint.
+Note that this handler is not thread-safe, since that is outside of
+the scope for the demo."
   (jingle:with-json-response
     (let* ((id (get-int-param params :id))
            (product (find-product-by-id id)))
@@ -140,10 +148,34 @@ In case of invalid input it will signal a 400 (Bad Request) error"
       (setf *products* (remove id *products* :test #'= :key (lambda (item) (getf item :|id|))))
       product)))
 
+(defun create-product-handler (params)
+  "Handles requests for POST /api/v1/product endpoint. Note that this
+handler is not thread-safe, since that is outside of the scope for the
+demo."
+  (declare (ignore params))
+  (jingle:with-json-response
+    (flet ((product-exists-p (name)
+             (find name *products* :test #'string= :key (lambda (item) (getf item :|name|))))
+           (get-next-id ()
+             (if (null *products*)
+                 1
+                 (1+ (apply #'max (mapcar (lambda (item) (getf item :|id|)) *products*))))))
+      (let* ((content (babel:octets-to-string (jingle:request-content jingle:*request*)))
+             (body (decode-json-or-throw-bad-request content))
+             (name (getf body :|name|))
+             (new-item (list :|id| (get-next-id) :|name| name)))
+        (unless name
+          (throw-bad-request-error "must provide product name"))
+        (when (product-exists-p name)
+          (throw-bad-request-error "product already exists"))
+        (push new-item *products*)
+        new-item))))
+
 (defparameter *urls*
-  `((:method :GET :path "/api/v1/ping" :handler ,#'ping-handler)
-    (:method :GET :path "/api/v1/product" :handler ,#'get-products-page-handler)
-    (:method :GET :path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler)
+  `((:method :GET    :path "/api/v1/ping"        :handler ,#'ping-handler)
+    (:method :GET    :path "/api/v1/product"     :handler ,#'get-products-page-handler)
+    (:method :GET    :path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler)
+    (:method :POST   :path "/api/v1/product"     :handler ,#'create-product-handler)
     (:method :DELETE :path "/api/v1/product/:id" :handler ,#'delete-product-by-id-handler))
   "The URLs map of our API")
 
