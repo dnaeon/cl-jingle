@@ -16,6 +16,54 @@ clone the repo and add it to your [[https://www.quicklisp.org/beta/faq.html][Qui
   git clone https://github.com/dnaeon/jingle.git
 #+end_src
 
+* Demo
+
+The =JINGLE.DEMO= system provides a ready-to-run example REST API,
+which comes with an [[https://swagger.io/specification/][OpenAPI 3.x spec]], [[https://swagger.io/tools/swagger-ui/][Swagger UI]], and a command-line
+interface app built with [[https://github.com/dnaeon/clingon][clingon]].
+
+In order to build the demo application, simply execute this command.
+
+#+begin_src shell
+  make demo
+#+end_src
+
+This will build the =jingle-demo= app, which you can find in the
+=bin/= directory.
+
+In order to start the HTTP server, execute the following command.
+
+#+begin_src shell
+  bin/jingle-demo serve
+#+end_src
+
+Once the HTTP server is up and running navigate to
+[[http://localhost:5000/api/docs/][http://localhost:5000/api/docs/]] which should take you to the Swagger
+UI.
+
+[[./images/jingle-swagger-ui.png]]
+
+Make sure to check the various sub-commands provided by =jingle-demo=,
+which allow you to interface with the REST APIs.
+
+You can also run the demo app in Docker. First, build the image.
+
+#+begin_src shell
+  make docker-demo
+#+end_src
+
+Once the image is built you can start up the service by executing the
+following command.
+
+#+begin_src shell
+   docker run -p 5000:5000 cl-jingle:latest serve --address 0.0.0.0
+#+end_src
+
+You can also view a short demo of the command-line interface
+application, which interfaces with the REST API here.
+
+[[./images/jingle-demo.gif]]
+
 * Usage
 
 Start up your REPL and load the =JINGLE= system.
