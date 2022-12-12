@@ -23,15 +23,7 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-user)
-(defpackage :jingle.demo.serve
-  (:use :cl)
-  (:import-from :clingon)
-  (:import-from :jingle.demo.api)
-  (:import-from :lack.middleware.accesslog)
-  (:export
-   :serve/command))
-(in-package :jingle.demo.serve)
+(in-package :jingle.demo.cli)
 
 (defun serve/options ()
   "Returns the options for the `serve' command"

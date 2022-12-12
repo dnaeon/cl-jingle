@@ -52,9 +52,10 @@
                 :serial t
                 :components ((:file "api")
                              (:file "client")
-                             (:file "serve-command")
-                             (:file "main")
-                             (:file "package"))))
+                             (:file "cli-package")
+                             (:file "cli-utils")
+                             (:file "cli-serve-command")
+                             (:file "cli-main"))))
   :build-operation "program-op"
   :build-pathname "bin/jingle-demo"
   :entry-point "jingle.demo:main")

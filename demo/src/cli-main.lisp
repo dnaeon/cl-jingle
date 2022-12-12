@@ -23,15 +23,7 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-user)
-(defpackage :jingle.demo.main
-  (:use :cl)
-  (:import-from :clingon)
-  (:import-from
-   :jingle.demo.serve
-   :serve/command)
-  (:export :main))
-(in-package :jingle.demo.main)
+(in-package :jingle.demo.cli)
 
 (defun print-doc/command ()
   "Returns a command which will print the app's documentation"
