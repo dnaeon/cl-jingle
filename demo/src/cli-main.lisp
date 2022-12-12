@@ -53,6 +53,7 @@
   "Returns the list of sub-commands for the top-level command"
   (list
    (serve/command)
+   (list/command)
    (print-doc/command)
    (zsh-completions/command)))
 

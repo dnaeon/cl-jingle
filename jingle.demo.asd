@@ -46,7 +46,8 @@
                :local-time
                :jonathan
                :dexador
-               :quri)
+               :quri
+               :cl-ascii-table)
   :components ((:module "demo"
                 :pathname #P"demo/src/"
                 :serial t
@@ -55,6 +56,7 @@
                              (:file "cli-package")
                              (:file "cli-utils")
                              (:file "cli-serve-command")
+                             (:file "cli-list-command")
                              (:file "cli-main"))))
   :build-operation "program-op"
   :build-pathname "bin/jingle-demo"
