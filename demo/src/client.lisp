@@ -26,12 +26,18 @@
 (in-package :cl-user)
 (defpackage :jingle.demo.client
   (:use :cl)
+  (:import-from :dexador)
+  (:import-from :quri)
+  (:import-from :jonathan)
   (:export
    :client
    :client-scheme
    :client-port
    :client-hostname
-   :client-api-prefix))
+   :client-api-prefix
+   :make-client
+   :make-api-uri
+   :ping))
 (in-package :jingle.demo.client)
 
 (defclass client ()
@@ -56,3 +62,19 @@
     :accessor client-api-prefix
     :documentation "API prefix"))
   (:documentation "Base API client for interfacing with the JINGLE.DEMO API endpoints"))
+
+(defun make-client (&rest rest)
+  "Creates a new API client"
+  (apply #'make-instance 'client rest))
+
+(defmethod make-api-uri ((client client) path &key query-params)
+  "Creates an URI to the given API path"
+  (quri:make-uri :scheme (client-scheme client)
+                 :port (client-port client)
+                 :host (client-hostname client)
+                 :path (format nil "~a~a" (client-api-prefix client) path)
+                 :query query-params))
+
+(defmethod ping ((client client))
+  (let ((uri (make-api-uri client "/ping")))
+    (jonathan:parse (dexador:get uri))))
