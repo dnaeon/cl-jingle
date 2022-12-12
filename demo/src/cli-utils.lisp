@@ -31,3 +31,9 @@
         (hostname (clingon:getopt cmd :api-server/hostname))
         (port (clingon:getopt cmd :api-server/port)))
     (jingle.demo.client:make-client :scheme scheme :hostname hostname :port port)))
+
+(defun display-products-table (items)
+  (let ((table (ascii-table:make-table (list "ID" "NAME") :header "PRODUCTS")))
+    (dolist (item items)
+      (ascii-table:add-row table (list (getf item :|id|) (getf item :|name|))))
+    (ascii-table:display table)))

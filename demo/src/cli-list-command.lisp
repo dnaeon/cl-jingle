@@ -44,11 +44,8 @@
   (let* ((client (make-api-client-from-opts cmd))
          (from (clingon:getopt cmd :list-cmd/from))
          (to (clingon:getopt cmd :list-cmd/to))
-         (items (jingle.demo.client:get-products-page client :from from :to to))
-         (table (ascii-table:make-table (list "ID" "NAME") :header "PRODUCTS")))
-    (dolist (item items)
-      (ascii-table:add-row table (list (getf item :|id|) (getf item :|name|))))
-    (ascii-table:display table)))
+         (items (jingle.demo.client:get-products-page client :from from :to to)))
+    (display-products-table items)))
 
 (defun list/command ()
   "Returns the `list' command"
