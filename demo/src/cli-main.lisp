@@ -54,6 +54,7 @@
   (list
    (serve/command)
    (list/command)
+   (get/command)
    (print-doc/command)
    (zsh-completions/command)))
 
