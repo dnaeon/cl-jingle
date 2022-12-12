@@ -49,8 +49,30 @@
                :quri
                :cl-ascii-table
                :babel)
-  :components ((:module "demo"
+  :components ((:module "swagger-ui-dist"
+                :pathname #P"demo/swagger-ui/"
+                :components ((:static-file "favicon-16x16.png")
+                             (:static-file "favicon-32x32.png")
+                             (:static-file "index.css")
+                             (:static-file "index.html")
+                             (:static-file "oauth2-redirect.html")
+                             (:static-file "openapi-spec.yaml")
+                             (:static-file "swagger-initializer.js")
+                             (:static-file "swagger-ui-bundle.js")
+                             (:static-file "swagger-ui-bundle.js.map")
+                             (:static-file "swagger-ui.css")
+                             (:static-file "swagger-ui.css.map")
+                             (:static-file "swagger-ui-es-bundle-core.js")
+                             (:static-file "swagger-ui-es-bundle-core.js.map")
+                             (:static-file "swagger-ui-es-bundle.js")
+                             (:static-file "swagger-ui-es-bundle.js.map")
+                             (:static-file "swagger-ui.js")
+                             (:static-file "swagger-ui.js.map")
+                             (:static-file "swagger-ui-standalone-preset.js")
+                             (:static-file "swagger-ui-standalone-preset.js.map")))
+               (:module "demo"
                 :pathname #P"demo/src/"
+                :depends-on ("swagger-ui-dist")
                 :serial t
                 :components ((:file "api")
                              (:file "client")
