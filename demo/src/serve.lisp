@@ -29,7 +29,6 @@
   (:import-from :clingon)
   (:import-from :jingle.demo.api)
   (:import-from :lack.middleware.accesslog)
-  (:import-from :with-user-abort)
   (:export
    :serve/command))
 (in-package :jingle.demo.serve)
@@ -42,25 +41,25 @@
                         :long-name "address"
                         :initial-value "127.0.0.1"
                         :env-vars '("ADDRESS")
-                        :key :serve/address)
+                        :key :serve-cmd/address)
    (clingon:make-option :integer
                         :description "port to listen on"
                         :long-name "port"
                         :initial-value 5000
                         :env-vars '("PORT")
-                        :key :serve/port)
+                        :key :serve-cmd/port)
    (clingon:make-option :boolean
                         :description "run in silent mode, if set to true"
                         :long-name "silent"
                         :initial-value :false
                         :env-vars '("SILENT")
-                        :key :serve/silent-mode)))
+                        :key :serve-cmd/silent-mode)))
 
 (defun serve/handler (cmd)
   "The handler for the `serve' command"
-  (let* ((address (clingon:getopt cmd :serve/address))
-         (port (clingon:getopt cmd :serve/port))
-         (silent-mode (clingon:getopt cmd :serve/silent-mode))
+  (let* ((address (clingon:getopt cmd :serve-cmd/address))
+         (port (clingon:getopt cmd :serve-cmd/port))
+         (silent-mode (clingon:getopt cmd :serve-cmd/silent-mode))
          (middlewares (list lack.middleware.accesslog:*lack-middleware-accesslog*))
          (swagger-ui-dist (asdf:system-relative-pathname :jingle.demo "demo/swagger-ui"))
          (app (jingle:make-app :middlewares middlewares
@@ -70,7 +69,9 @@
                                :use-thread nil
                                :debug-mode nil)))
     (jingle:serve-directory app "/api/docs" swagger-ui-dist)
+    ;; Register the API endpoints for our app and start it up
     ;; SIGINT signals are already handled by CLACK:CLACKUP
+    (jingle.demo.api:register-urls app)
     (jingle:start app)))
 
 (defun serve/command ()
