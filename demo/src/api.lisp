@@ -28,7 +28,9 @@
   (:use :cl)
   (:import-from :jingle)
   (:import-from :jonathan)
-  (:import-from :local-time))
+  (:import-from :local-time)
+  (:export
+   :register-urls))
 (in-package :jingle.demo.api)
 
 (define-condition api-error (jingle:base-http-error)
@@ -72,12 +74,12 @@ In case of invalid input it will signal a 400 (Bad Request) error"
     (:|id| 4 :|name| "qux"))
   "The `database' used by our API")
 
-(defun find-product-by-name (name)
+(defun find-product-by-id (name)
   "Finds a product by name"
   (find name
         *products*
-        :key (lambda (item) (getf item :|name|))
-        :test #'string=))
+        :key (lambda (item) (getf item :|id|))
+        :test #'=))
 
 (defun take (items from to)
   "A helper function to return the ITEMS between FROM and TO range"
@@ -87,11 +89,11 @@ In case of invalid input it will signal a 400 (Bad Request) error"
         nil
         (subseq items from to))))
 
-(defun get-product-handler (params)
-  "Handles requests for the /api/v1/product/:name endpoint"
+(defun get-product-by-id-handler (params)
+  "Handles requests for the /api/v1/product/:id endpoint"
   (jingle:with-json-response
-    (let* ((name (jingle:get-request-param params :name))
-           (product (find-product-by-name name)))
+    (let* ((name (get-int-param params :id))
+           (product (find-product-by-id name)))
       (unless product
         (throw-not-found-error "product not found"))
       product)))
@@ -127,3 +129,16 @@ In case of invalid input it will signal a 400 (Bad Request) error"
   (declare (ignore params))
   (jingle:with-json-response
     (make-instance 'ping-response)))
+
+(defparameter *urls*
+  `((:path "/api/v1/ping" :handler ,#'ping-handler :method :get)
+    (:path "/api/v1/product" :handler ,#'get-products-page-handler :method :get)
+    (:path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler :method :get))
+  "The URLs map of our API")
+
+(defun register-urls (app)
+  (loop :for item :in *urls*
+        :for path = (getf item :path)
+        :for handler = (getf item :handler)
+        :for method = (getf item :method) :do
+          (setf (jingle:route app path :method method) handler)))
