@@ -57,6 +57,7 @@
    (get/command)
    (ping/command)
    (delete/command)
+   (create/command)
    (print-doc/command)
    (zsh-completions/command)))
 
