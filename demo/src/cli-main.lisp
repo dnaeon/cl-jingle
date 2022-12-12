@@ -56,6 +56,28 @@
    (print-doc/command)
    (zsh-completions/command)))
 
+(defun top-level/options ()
+  "Returns the list of top-level command options"
+  (list
+   (clingon:make-option :choice
+                        :description "scheme to use when connecting to the API server"
+                        :long-name "scheme"
+                        :items '("http" "https")
+                        :initial-value "http"
+                        :key :api-server/scheme)
+   (clingon:make-option :string
+                        :description "hostname of the API server"
+                        :long-name "address"
+                        :initial-value "127.0.0.1"
+                        :env-vars '("ENDPOINT")
+                        :key :api-server/hostname)
+   (clingon:make-option :integer
+                        :description "port on which the API server is listening"
+                        :long-name "port"
+                        :initial-value 5000
+                        :env-vars '("PORT")
+                        :key :api-server/port)))
+
 (defun top-level/handler (cmd)
   "The handler for the top-level command"
   (clingon:print-usage-and-exit cmd t))
@@ -68,6 +90,7 @@
                         :authors '("Marin Atanasov Nikolov <dnaeon@gmail.com>")
                         :license "BSD 2-Clause"
                         :handler #'top-level/handler
+                        :options (top-level/options)
                         :sub-commands (top-level/sub-commands)))
 
 (defun main ()

@@ -58,4 +58,4 @@
                              (:file "cli-main"))))
   :build-operation "program-op"
   :build-pathname "bin/jingle-demo"
-  :entry-point "jingle.demo:main")
+  :entry-point "jingle.demo.cli:main")
