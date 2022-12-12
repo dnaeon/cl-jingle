@@ -3,9 +3,18 @@ FROM clfoundation/sbcl:2.2.1 AS builder
 ENV QUICKLISP_ADD_TO_INIT_FILE=true
 ENV QUICKLISP_DIST_VERSION=latest
 
-WORKDIR /root/quicklisp/local-projects/cl-jingle
+WORKDIR /app
 COPY . .
 
-RUN /usr/local/bin/install-quicklisp && make demo
+RUN /usr/local/bin/install-quicklisp && \
+    sbcl --eval '(push #P"/app/" ql:*local-project-directories*)' \
+         --eval '(ql:quickload :jingle.demo)' \
+         --eval '(asdf:make :jingle.demo)' \
+         --eval '(quit)'
 
-ENTRYPOINT ["./bin/jingle-demo"]
+FROM debian:bullseye-slim
+WORKDIR /app
+COPY --from=builder /app/bin/jingle-demo .
+COPY --from=builder /app/swagger-ui/ swagger-ui/
+
+ENTRYPOINT ["./jingle-demo"]

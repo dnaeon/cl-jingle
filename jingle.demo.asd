@@ -41,6 +41,7 @@
   :bug-tracker "https://github.com/dnaeon/cl-jingle"
   :source-control "https://github.com/dnaeon/cl-jingle"
   :depends-on (:jingle
+               :clack-handler-hunchentoot
                :lack-middleware-accesslog
                :clingon
                :local-time
@@ -50,7 +51,7 @@
                :cl-ascii-table
                :babel)
   :components ((:module "swagger-ui-dist"
-                :pathname #P"demo/swagger-ui/"
+                :pathname #P"swagger-ui/"
                 :components ((:static-file "favicon-16x16.png")
                              (:static-file "favicon-32x32.png")
                              (:static-file "index.css")
@@ -71,7 +72,7 @@
                              (:static-file "swagger-ui-standalone-preset.js")
                              (:static-file "swagger-ui-standalone-preset.js.map")))
                (:module "demo"
-                :pathname #P"demo/src/"
+                :pathname #P"demo/"
                 :depends-on ("swagger-ui-dist")
                 :serial t
                 :components ((:file "api")

@@ -53,7 +53,7 @@
          (port (clingon:getopt cmd :serve-cmd/port))
          (silent-mode (clingon:getopt cmd :serve-cmd/silent-mode))
          (middlewares (list lack.middleware.accesslog:*lack-middleware-accesslog*))
-         (swagger-ui-dist (asdf:system-relative-pathname :jingle.demo "demo/swagger-ui"))
+         (swagger-ui-dist (asdf:system-relative-pathname :jingle.demo "swagger-ui"))
          (app (jingle:make-app :middlewares middlewares
                                :address address
                                :port port
