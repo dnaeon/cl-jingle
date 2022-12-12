@@ -55,6 +55,7 @@
                              (:file "client")
                              (:file "cli-package")
                              (:file "cli-utils")
+                             (:file "cli-ping-command")
                              (:file "cli-serve-command")
                              (:file "cli-list-command")
                              (:file "cli-get-command")
