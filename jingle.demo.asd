@@ -52,7 +52,7 @@
                 :serial t
                 :components ((:file "api")
                              (:file "client")
-                             (:file "serve")
+                             (:file "serve-command")
                              (:file "main")
                              (:file "package"))))
   :build-operation "program-op"
