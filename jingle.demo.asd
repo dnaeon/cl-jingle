@@ -43,13 +43,15 @@
   :depends-on (:jingle
                :lack-middleware-accesslog
                :clingon
-               :with-user-abort
                :local-time
-               :jonathan)
+               :jonathan
+               :dexador
+               :quri)
   :components ((:module "demo"
                 :pathname #P"demo/src/"
                 :serial t
                 :components ((:file "api")
+                             (:file "client")
                              (:file "serve")
                              (:file "main")
                              (:file "package"))))
