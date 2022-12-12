@@ -59,6 +59,7 @@
                              (:file "cli-serve-command")
                              (:file "cli-list-command")
                              (:file "cli-get-command")
+                             (:file "cli-delete-command")
                              (:file "cli-main"))))
   :build-operation "program-op"
   :build-pathname "bin/jingle-demo"

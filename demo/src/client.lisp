@@ -39,7 +39,8 @@
    :make-api-uri
    :ping
    :get-product-by-id
-   :get-products-page))
+   :get-products-page
+   :delete-product-by-id))
 (in-package :jingle.demo.client)
 
 (defclass client ()
@@ -87,6 +88,12 @@
   (let* ((path (format nil "/product/~A" id))
          (uri (make-api-uri client path)))
     (jonathan:parse (dexador:get uri))))
+
+(defmethod delete-product-by-id ((client client) id)
+  "Deletes a product by id"
+  (let* ((path (format nil "/product/~A" id))
+         (uri (make-api-uri client path)))
+    (jonathan:parse (dexador:delete uri))))
 
 (defmethod get-products-page ((client client) &key (from 0) (to 2))
   (let* ((params `(("from" . ,from) ("to" . ,to)))
