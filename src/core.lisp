@@ -57,6 +57,7 @@
    :serve-directory
    :redirect-route
    :handle-error
+   :find-route
    ;; Conditions
    :base-http-error
    :http-error-code
@@ -103,6 +104,9 @@ LOCATION"))
 (defgeneric handle-error (condition)
   (:documentation "Handles the CONDITION by setting up appropriate HTTP response to send
 to the client"))
+
+(defgeneric find-route (app name)
+  (:documentation "Finds and returns the route with the given name"))
 
 (define-condition base-http-error (simple-error)
   ((code
