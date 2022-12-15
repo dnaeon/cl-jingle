@@ -58,6 +58,7 @@
    :redirect-route
    :handle-error
    :find-route
+   :url-for
    ;; Conditions
    :base-http-error
    :http-error-code
@@ -107,6 +108,10 @@ to the client"))
 
 (defgeneric find-route (app name)
   (:documentation "Finds and returns the route with the given name"))
+
+(defgeneric url-for (app name &rest params)
+  (:documentation "Returns the URL path for the given route NAME with all PARAMS applied
+to it"))
 
 (define-condition base-http-error (simple-error)
   ((code
