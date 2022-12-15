@@ -41,6 +41,8 @@
   :bug-tracker "https://github.com/dnaeon/cl-jingle"
   :source-control "https://github.com/dnaeon/cl-jingle"
   :depends-on (:str
+               :quri
+               :myway
                :lack
                :lack-middleware-static
                :lack-middleware-mount

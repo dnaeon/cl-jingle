@@ -43,6 +43,9 @@
   (:import-from :lack.middleware.mount)
   (:import-from :lack.app.directory)
   (:import-from :ningle)
+  (:import-from :ningle.app)
+  (:import-from :myway)
+  (:import-from :quri)
   (:import-from :clack)
   (:export
    ;; Special vars
@@ -110,8 +113,8 @@ to the client"))
   (:documentation "Finds and returns the route with the given name"))
 
 (defgeneric url-for (app name &rest params)
-  (:documentation "Returns the URL path for the given route NAME with all PARAMS applied
-to it"))
+  (:documentation "Returns the URL for the given route NAME with all PARAMS applied to
+it"))
 
 (define-condition base-http-error (simple-error)
   ((code
@@ -310,3 +313,19 @@ PATH, serving files from ROOT"
           (declare (ignore params))
           (set-response-header :content-type "text/html; charset=utf-8")
           (redirect location code))))
+
+(defmethod find-route ((app app) (name string))
+  "Returns the route with the given NAME, if registered."
+  (let* ((routes (myway:mapper-routes (ningle.app::mapper app)))
+         (route (find name routes :test #'string= :key #'myway:route-name)))
+    route))
+
+(defmethod url-for ((app app) (name string) &rest params)
+  "Return the URL for the given route NAME with PARAMS applied to it"
+  (let ((route (find-route app name)))
+    (unless route
+      (return-from url-for nil))
+    (multiple-value-bind (path params-plist)
+        (myway:url-for route params)
+      (let ((params-alist (loop :for (k v) :on params-plist :by #'cddr :collect (cons (string k) v))))
+        (quri:make-uri :path path :query params-alist)))))
