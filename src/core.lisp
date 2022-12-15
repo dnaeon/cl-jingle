@@ -325,7 +325,11 @@ PATH, serving files from ROOT"
   (let ((route (find-route app name)))
     (unless route
       (return-from url-for nil))
-    (multiple-value-bind (path params-plist)
-        (myway:url-for route params)
-      (let ((params-alist (loop :for (k v) :on params-plist :by #'cddr :collect (cons (string k) v))))
-        (quri:make-uri :path path :query params-alist)))))
+    ;; Convert param values to strings first
+    (let ((params (loop :for (k v) :on params :by #'cddr :appending (list k (princ-to-string v)))))
+      (multiple-value-bind (path params-plist)
+          (myway:url-for route params)
+        ;; QURI:MAKE-URI expects an ALIST and keys being strings, so
+        ;; make sure we convert the rest of the params here.
+        (let ((params-alist (loop :for (k v) :on params-plist :by #'cddr :collect (cons (princ-to-string k) v))))
+          (quri:make-uri :path path :query params-alist))))))
