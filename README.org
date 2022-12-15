@@ -874,6 +874,64 @@ Time to test things out.
 Great, things work as expected and our API clients will receive
 consistent error responses with the proper HTTP status codes set.
 
+** Reverse URLs
+
+When you register routes in your app with names, you can then refer to
+these routes by their names. This is useful in situations where you
+need to get the URL for a particular route.
+
+In order to get the URL for a route with a particular name use the
+=JINGLE:URL-FOR= generic function.
+
+Consider the HTTP handlers we have shown in the previous section of
+this document.
+
+#+begin_src lisp
+  (defun get-product-handler (params)
+    "Handles requests for the /api/v1/product/:name endpoint"
+    (jingle:with-json-response
+      (let* ((name (jingle:get-request-param params :name))
+             (product (find-product-by-name name)))
+        (unless product
+          (throw-not-found-error "product not found"))
+        product)))
+
+  (defun get-products-page-handler (params)
+    "Handles requests for the /api/v1/product endpoint"
+    (jingle:with-json-response
+      (let ((from (get-int-param params "from" 0))
+            (to (get-int-param params "to" 2)))
+        (when (or (minusp from) (minusp to))
+          (throw-bad-request-error "`from` and `to` must be positive"))
+        (take *products* from to))))
+#+end_src
+
+We can register these handlers and associate them with a name, which we
+can later refer to.
+
+#+begin_src lisp
+  CL-USER> (defparameter *app* (jingle:make-app))
+  CL-USER> (setf (jingle:route *app* "/api/v1/product" :method :get :identifier "get-products-page")
+                 #'get-products-page-handler)
+  CL-USER> (setf (jingle:route *app* "/api/v1/product/:name" :method :get :identifier "get-product-by-name")
+                 #'get-product-handler)
+#+end_src
+
+Now, we can get the actual URLs for our HTTP handlers by using their
+names.
+
+#+begin_src lisp
+  CL-USER> (jingle:url-for *app* "get-product-by-name" :|name| "foo")
+  #<QURI.URI:URI /api/v1/product/foo>
+  CL-USER> (jingle:url-for *app* "get-products-page" :|from| 0 :|to| 100)
+  #<QURI.URI:URI /api/v1/product?from=0&to=100>
+#+end_src
+
+Resolving URLs using =JINGLE:URL-FOR= is also useful when you are
+creating test cases for your HTTP handlers. Within your test cases
+instead of manually constructing the URLs to the respective HTTP
+handlers you may refer to them by using their names.
+
 * Contributing
 
 =jingle= is hosted on [[https://github.com/dnaeon/jingle][Github]]. Please contribute by reporting issues,
