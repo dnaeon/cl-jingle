@@ -921,7 +921,7 @@ Now, we can get the actual URLs for our HTTP handlers by using their
 names.
 
 #+begin_src lisp
-  CL-USER> (jingle:url-for *app* "get-product-by-name" :|name| "foo")
+  CL-USER> (jingle:url-for *app* "get-product-by-name" :name "foo")
   #<QURI.URI:URI /api/v1/product/foo>
   CL-USER> (jingle:url-for *app* "get-products-page" :|from| 0 :|to| 100)
   #<QURI.URI:URI /api/v1/product?from=0&to=100>
@@ -931,6 +931,20 @@ Resolving URLs using =JINGLE:URL-FOR= is also useful when you are
 creating test cases for your HTTP handlers. Within your test cases
 instead of manually constructing the URLs to the respective HTTP
 handlers you may refer to them by using their names.
+
+Make sure to also check the =JINGLE.DEMO= system, which uses a
+/handler registry/, which is used for registering the HTTP handlers
+for a =JINGLE:APP=.
+
+Once you resolve the URL for a particular handler you can construct
+the final URL, which will contain scheme, hostname, etc.
+
+#+begin_src lisp
+  CL-USER> (jingle:url-for *app* "get-product-by-name" :name "foo")
+  #<QURI.URI:URI /api/v1/product/foo>
+  CL-USER> (quri:merge-uris * (quri:make-uri :host "example.org" :scheme "https"))
+  #<QURI.URI.HTTP:URI-HTTPS https://example.org/api/v1/product/foo>
+#+end_src
 
 * Contributing
 
