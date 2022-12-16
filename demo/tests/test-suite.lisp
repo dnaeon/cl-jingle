@@ -61,9 +61,9 @@
   ;; Headers are in downcase
   (gethash (string-downcase (princ-to-string name)) headers))
 
-(deftest ping
-  (testing "ping endpoint"
-    (let ((uri (jingle:url-for *test-app* "ping")))
+(deftest ping-tests
+  (testing "/api/v1/ping endpoint"
+    (let ((uri (jingle:url-for *test-app* "ping"))) ;; reverse url
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check HTTP Status Code
         (ok (= (jingle:status-code-number code) (jingle:status-code-number :ok))
@@ -75,3 +75,59 @@
         ;; Check HTTP headers
         (ok (string= (get-header headers :content-type) "application/json")
             "Content-Type matches")))))
+
+(defun get-product-names (items)
+  "A helper function which returns the names of fetched products from the
+/api/v1/product endpoint"
+  (mapcar (lambda (item)
+            (getf item :|name|))
+          items))
+
+(deftest get-product-pages-tests
+  (testing "/api/v1/product - first page of products"
+    (let* ((from 0)
+           (to 2)
+           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
+           (want-product-names '("foo" "bar"))) ;; products with id 1 and 2
+      (multiple-value-bind (body code headers) (dexador:get uri)
+        ;; Check status code
+        (ok (= (jingle:status-code-number code) (jingle:status-code-number :ok))
+            "Status code is OK")
+        ;; Check HTTP headers
+        (ok (string= (get-header headers :content-type) "application/json")
+            "Content-Type matches")
+        ;; Check body
+        (ok (equal want-product-names (get-product-names (jonathan:parse body)))
+            "Fetched products match"))))
+
+  (testing "/api/v1/product - second page of products"
+    (let* ((from 2)
+           (to 4)
+           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
+           (want-product-names '("baz" "qux"))) ;; products with id 3 and 4
+      (multiple-value-bind (body code headers) (dexador:get uri)
+        ;; Check status code
+        (ok (= (jingle:status-code-number code) (jingle:status-code-number :ok))
+            "Status code is OK")
+        ;; Check HTTP headers
+        (ok (string= (get-header headers :content-type) "application/json")
+            "Content-Type matches")
+        ;; Check body
+        (ok (equal want-product-names (get-product-names (jonathan:parse body)))
+            "Fetched products match"))))
+
+  (testing "/api/v1/product - third page of products (empty)"
+    (let* ((from 100)  ;; we don't have products at this offset
+           (to 200)    ;; we don't have products at this offset
+           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
+           (want-product-names nil))
+      (multiple-value-bind (body code headers) (dexador:get uri)
+        ;; Check status code
+        (ok (= (jingle:status-code-number code) (jingle:status-code-number :ok))
+            "Status code is OK")
+        ;; Check HTTP headers
+        (ok (string= (get-header headers :content-type) "application/json")
+            "Content-Type matches")
+        ;; Check body
+        (ok (equal want-product-names (get-product-names (jonathan:parse body)))
+            "Fetched products match")))))
