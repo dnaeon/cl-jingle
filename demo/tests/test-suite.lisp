@@ -28,7 +28,9 @@
   (:use :cl :rove)
   (:import-from :jingle)
   (:import-from :jingle.demo.api)
-  (:import-from :lack.middleware.accesslog))
+  (:import-from :lack.middleware.accesslog)
+  (:import-from :dexador)
+  (:import-from :jonathan))
 (in-package :jingle.demo.test)
 
 (defparameter *test-app* nil
@@ -39,12 +41,37 @@
   "The list of middlewares to install on the test app")
 
 (setup
+  ;; Sets up a test HTTP server
   (unless *test-app*
-    (setf *test-app* (jingle:make-test-app :middlewares *middlewares*)))
+    (setf *test-app* (jingle:make-test-app :middlewares *middlewares*))
+    (jingle.demo.api:register-urls *test-app*))
   (format t "Starting up test HTTP server ...~%")
-  (jingle:start *test-app*))
+  (jingle:start *test-app*)
+  ;; Give it some time to start up the server
+  (sleep 1))
 
 (teardown
+  ;; Shuts down the test HTTP server
   (when *test-app*
     (format t "Shutting down test HTTP server ... ~%")
     (jingle:stop *test-app*)))
+
+(defun get-header (headers name)
+  "A helper function to get the value of a given header"
+  ;; Headers are in downcase
+  (gethash (string-downcase (princ-to-string name)) headers))
+
+(deftest ping
+  (testing "ping endpoint"
+    (let ((uri (jingle:url-for *test-app* "ping")))
+      (multiple-value-bind (body code headers) (dexador:get uri)
+        ;; Check HTTP Status Code
+        (ok (= (jingle:status-code-number code) (jingle:status-code-number :ok))
+            "Status code is OK")
+        ;; Check response body
+        (let ((pong (jonathan:parse body)))
+          (ok (string= "pong" (getf pong :|message|)) "Pong response message matches")
+          (ok (numberp (getf pong :|timestamp|)) "Got valid timestamp in pong response"))
+        ;; Check HTTP headers
+        (ok (string= (get-header headers :content-type) "application/json")
+            "Content-Type matches")))))
