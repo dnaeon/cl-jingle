@@ -168,7 +168,7 @@
                 "Error message matches")))))))
 
 (deftest create-product-by-id-tests
-  (testing "POST /api/v1/product/:id - with good payload"
+  (testing "POST /api/v1/product/:id"
     (let* ((new-product-name "new-product")
            (payload (jonathan:to-json (list :|name| new-product-name)))
            (headers '(("Accept" . "application/json")
@@ -201,3 +201,36 @@
           (let ((api-error (jonathan:parse (dexador:response-body e))))
             (ok (string= (getf api-error :|error|) "product already exists")
                 "Error message matches")))))))
+
+(deftest delete-product-by-id-tests
+  (testing "DELETE /api/v1/product/:id"
+    (let* ((id 1) ;; product with name `foo`
+           (uri (jingle:url-for *test-app* "delete-product-by-id" :id id))) ;; reverse url
+      ;; Delete the product
+      (multiple-value-bind (body code headers) (dexador:delete uri)
+        ;; Check status code
+        (ok (= code (jingle:status-code-number :ok))
+            "Status code is OK")
+        ;; Check HTTP headers
+        (ok (string= (get-header headers :content-type) "application/json")
+            "Content-Type matches")
+        ;; Check body
+        (let ((product (jonathan:parse body)))
+          (ok (string= (getf product :|name|) "foo")
+              "Product name matches")
+          (ok (= (getf product :|id|) 1) "Product IDs match")))
+
+      ;; Try to delete it again, which should fail.
+      (handler-case (dexador:delete uri)
+        (dexador:http-request-failed (e)
+          ;; Check status code
+          (ok (= (dexador:response-status e) (jingle:status-code-number :not-found))
+              "Status code is Not Found")
+          ;; Check HTTP headers
+          (ok (string= (get-header (dexador:response-headers e) :content-type) "application/json")
+              "Content-Type matches")
+          ;; Check body
+          (let ((api-error (jonathan:parse (dexador:response-body e))))
+            (ok (string= (getf api-error :|error|) "product not found")
+                "Error message matches")))))))
+
