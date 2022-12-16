@@ -946,6 +946,20 @@ the final URL, which will contain scheme, hostname, etc.
   #<QURI.URI.HTTP:URI-HTTPS https://example.org/api/v1/product/foo>
 #+end_src
 
+** Testing HTTP Handlers
+
+The =JINGLE:TEST-APP= is a test app meant to be used for test
+cases. The difference between =JINGLE:TEST-APP= and =JINGLE:APP= is
+that the test app always binds on =127.0.0.1= and listens on a random
+port within a given range.
+
+Also, when using =JINGLE:URL-FOR= generic function with a
+=JINGLE:TEST-APP= the result is a full URL, which contains the scheme,
+the hostname and the port of the running test HTTP server.
+
+Make sure to check the =JINGLE.DEMO.TEST= system for some examples,
+which provides the test suite for the demo application.
+
 * Contributing
 
 =jingle= is hosted on [[https://github.com/dnaeon/jingle][Github]]. Please contribute by reporting issues,
