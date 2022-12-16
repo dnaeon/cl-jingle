@@ -47,6 +47,7 @@
   (:import-from :myway)
   (:import-from :quri)
   (:import-from :clack)
+  (:import-from :find-port)
   (:export
    ;; Special vars
    :*env*
@@ -69,6 +70,8 @@
    ;; App class and accessors
    :app
    :make-app
+   :test-app
+   :make-test-app
    :http-server
    :http-server-kind
    :middlewares
@@ -204,6 +207,31 @@ used to query the environment from within the HTTP handlers.")
                  :silent-mode silent-mode
                  :use-thread use-thread))
 
+(defclass test-app (app)
+  ()
+  (:documentation "A jingle application used for testing purposes only"))
+
+(defun make-test-app (&key (middlewares nil)
+                        (server-kind :hunchentoot)
+                        (silent-mode nil)
+                        (port-min 40000)
+                        (port-max 50000))
+  "Creates a new jingle app for testing purposes only. This app is
+useful only when you are creating test cases for your HTTP handlers,
+as it binds on 127.0.0.1 and listens on a random port within the
+PORT-MIN:PORT-MAX range."
+  (let ((port (find-port:find-port :min port-min :max port-max :interface "127.0.0.1")))
+    (unless port
+      (error "No available port in the range ~A-~A" port-min port-max))
+    (make-instance 'test-app
+                   :middlewares middlewares
+                   :http-server-kind server-kind
+                   :address "127.0.0.1"
+                   :port port
+                   :debug-mode t
+                   :silent-mode silent-mode
+                   :use-thread t)))
+
 (defmethod lack.component:call ((app app) env)
   "Dynamically binds *ENV* to the Lack environment before it hits the
 HTTP handlers.  This way the HTTP handlers can interact with the
@@ -333,3 +361,14 @@ PATH, serving files from ROOT"
         ;; make sure we convert the rest of the params here.
         (let ((params-alist (loop :for (k v) :on params-plist :by #'cddr :collect (cons (princ-to-string k) v))))
           (quri:make-uri :path path :query params-alist))))))
+
+(defmethod url-for ((app test-app) (name string) &rest params)
+  "Return the URL for the given route NAME with PARAMS applied to it"
+  ;; When returning URLs for TEST-APP instances we can return the full
+  ;; URL with scheme, hostname, port, etc. to make things easy while
+  ;; testing. We don't do the same thing for regular apps, since we
+  ;; don't know what the actual endpoint will be used to expose the
+  ;; service to clients.
+  (let ((app-uri (apply #'call-next-method app name params))
+        (base-uri (quri:make-uri :scheme "http" :port (port app) :host (address app))))
+    (quri:merge-uris app-uri base-uri)))

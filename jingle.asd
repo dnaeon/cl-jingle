@@ -51,7 +51,8 @@
                :ningle
                :cl-reexport
                :local-time
-               :jonathan)
+               :jonathan
+               :find-port)
   :components ((:module "jingle"
                 :pathname #P"src/"
                 :components ((:file "codes")

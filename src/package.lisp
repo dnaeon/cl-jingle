@@ -27,7 +27,8 @@
 (defpackage :jingle
   (:use :cl)
   (:import-from :jingle.core)
-  (:import-from :ningle))
+  (:import-from :ningle)
+  (:import-from :find-port))
 (in-package :jingle)
 
 (cl-reexport:reexport-from :jingle.codes)
@@ -70,3 +71,6 @@
                            :response-headers
                            :response-body
                            :response-set-cookies))
+
+;; Re-exports from FIND-PORT
+(cl-reexport:reexport-from :find-port)
