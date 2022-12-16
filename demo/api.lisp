@@ -183,9 +183,14 @@ demo."
   "The URLs map of our API")
 
 (defun register-urls (app)
-  (loop :for item :in *urls*
-        :for path = (getf item :path)
-        :for handler = (getf item :handler)
-        :for method = (getf item :method)
-        :for name = (getf item :name) :do
-          (setf (jingle:route app path :method method :identifier name) handler)))
+  "Registers the API endpoints with the provided jingle app"
+  (let ((swagger-ui-dist (asdf:system-relative-pathname :jingle.demo "swagger-ui")))
+    (jingle:serve-directory app "/api/docs" swagger-ui-dist)
+    (jingle:redirect-route app "/" "/api/docs/")
+    (loop :for item :in *urls*
+          :for path = (getf item :path)
+          :for handler = (getf item :handler)
+          :for method = (getf item :method)
+          :for name = (getf item :name) :do
+            (setf (jingle:route app path :method method :identifier name) handler))
+    t))

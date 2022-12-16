@@ -53,15 +53,12 @@
          (port (clingon:getopt cmd :serve-cmd/port))
          (silent-mode (clingon:getopt cmd :serve-cmd/silent-mode))
          (middlewares (list lack.middleware.accesslog:*lack-middleware-accesslog*))
-         (swagger-ui-dist (asdf:system-relative-pathname :jingle.demo "swagger-ui"))
          (app (jingle:make-app :middlewares middlewares
                                :address address
                                :port port
                                :silent-mode silent-mode
                                :use-thread nil
                                :debug-mode nil)))
-    (jingle:serve-directory app "/api/docs" swagger-ui-dist)
-    (jingle:redirect-route app "/" "/api/docs/")
     ;; Register the API endpoints for our app and start it up
     ;; SIGINT signals are already handled by CLACK:CLACKUP
     (jingle.demo.api:register-urls app)
