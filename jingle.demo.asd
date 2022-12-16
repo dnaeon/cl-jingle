@@ -88,4 +88,5 @@
                              (:file "cli-main"))))
   :build-operation "program-op"
   :build-pathname "bin/jingle-demo"
-  :entry-point "jingle.demo.cli:main")
+  :entry-point "jingle.demo.cli:main"
+  :in-order-to ((test-op (test-op "jingle.demo.test"))))
