@@ -62,7 +62,7 @@
   (gethash (string-downcase (princ-to-string name)) headers))
 
 (deftest ping-tests
-  (testing "/api/v1/ping endpoint"
+  (testing "GET /api/v1/ping"
     (let ((uri (jingle:url-for *test-app* "ping"))) ;; reverse url
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check HTTP Status Code
@@ -84,7 +84,7 @@
           items))
 
 (deftest get-product-pages-tests
-  (testing "/api/v1/product - first page of products"
+  (testing "GET /api/v1/product - first page of products"
     (let* ((from 0)
            (to 2)
            (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
@@ -100,7 +100,7 @@
         (ok (equal want-product-names (get-product-names (jonathan:parse body)))
             "Fetched products match"))))
 
-  (testing "/api/v1/product - second page of products"
+  (testing "GET /api/v1/product - second page of products"
     (let* ((from 2)
            (to 4)
            (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
@@ -116,7 +116,7 @@
         (ok (equal want-product-names (get-product-names (jonathan:parse body)))
             "Fetched products match"))))
 
-  (testing "/api/v1/product - third page of products (empty)"
+  (testing "GET /api/v1/product - third page of products (empty)"
     (let* ((from 100)  ;; we don't have products at this offset
            (to 200)    ;; we don't have products at this offset
            (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
@@ -133,7 +133,7 @@
             "Fetched products match")))))
 
 (deftest get-product-by-id-tests
-  (testing "/api/v1/product/:id - get existing product"
+  (testing "GET /api/v1/product/:id - get existing product"
     (let* ((id 1)
            (uri (jingle:url-for *test-app* "get-product-by-id" :id id)) ;; reverse url
            (want-product '(:|id| 1 :|name| "foo"))) ;; products with id 1
@@ -151,7 +151,7 @@
           (ok (string= (getf want-product :|name|) (getf got-product :|name|))
               "Product names match")))))
 
-  (testing "/api/v1/product/:id - get non-existing product"
+  (testing "GET /api/v1/product/:id - get non-existing product"
     (let* ((id 42) ;; non-existing product id
            (uri (jingle:url-for *test-app* "get-product-by-id" :id id))) ;; reverse url
       (handler-case (dexador:get uri)
@@ -165,4 +165,39 @@
           ;; Check body
           (let ((api-error (jonathan:parse (dexador:response-body e))))
             (ok (string= (getf api-error :|error|) "product not found")
+                "Error message matches")))))))
+
+(deftest create-product-by-id-tests
+  (testing "POST /api/v1/product/:id - with good payload"
+    (let* ((new-product-name "new-product")
+           (payload (jonathan:to-json (list :|name| new-product-name)))
+           (headers '(("Accept" . "application/json")
+                      ("Content-Type" . "application/json")))
+           (uri (jingle:url-for *test-app* "create-product"))) ;; reverse url
+      ;; Create the product for the first time
+      (multiple-value-bind (body code headers) (dexador:post uri :headers headers :content payload)
+        ;; Check status code
+        (ok (= code (jingle:status-code-number :ok))
+            "Status code is OK")
+        ;; Check HTTP headers
+        (ok (string= (get-header headers :content-type) "application/json")
+            "Content-Type matches")
+        ;; Check body
+        (let ((product (jonathan:parse body)))
+          (ok (string= (getf product :|name|) new-product-name)
+              "Product name matches")
+          (ok (numberp (getf product :|id|)) "Got valid product ID")))
+
+      ;; Try to create the same product again, which should fail.
+      (handler-case (dexador:post uri :headers headers :content payload)
+        (dexador:http-request-failed (e)
+          ;; Check status code
+          (ok (= (dexador:response-status e) (jingle:status-code-number :bad-request))
+              "Status code is Bad Request")
+          ;; Check HTTP headers
+          (ok (string= (get-header (dexador:response-headers e) :content-type) "application/json")
+              "Content-Type matches")
+          ;; Check body
+          (let ((api-error (jonathan:parse (dexador:response-body e))))
+            (ok (string= (getf api-error :|error|) "product already exists")
                 "Error message matches")))))))
