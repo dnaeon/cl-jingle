@@ -130,7 +130,20 @@
             "Content-Type matches")
         ;; Check body
         (ok (equal want-product-names (get-product-names (jonathan:parse body)))
-            "Fetched products match")))))
+            "Fetched products match"))))
+
+  (testing "GET /api/v1/product - invalid FROM and TO query params"
+    (let* ((from "here")
+           (to "there")
+           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to))) ;; reverse url
+      (handler-case (dexador:get uri)
+        (dexador:http-request-failed (e)
+          ;; Check status code
+          (ok (= (dexador:response-status e) (jingle:status-code-number :bad-request))
+              "Status code is Bad Request")
+          ;; Check HTTP headers
+          (ok (string= (get-header (dexador:response-headers e) :content-type) "application/json")
+              "Content-Type matches"))))))
 
 (deftest get-product-by-id-tests
   (testing "GET /api/v1/product/:id - get existing product"
@@ -165,7 +178,19 @@
           ;; Check body
           (let ((api-error (jonathan:parse (dexador:response-body e))))
             (ok (string= (getf api-error :|error|) "product not found")
-                "Error message matches")))))))
+                "Error message matches"))))))
+
+  (testing "GET /api/v1/product/:id - invalid ID"
+    (let* ((id "invalid")
+           (uri (jingle:url-for *test-app* "get-product-by-id" :id id))) ;; reverse url
+      (handler-case (dexador:get uri)
+        (dexador:http-request-failed (e)
+          ;; Check status code
+          (ok (= (dexador:response-status e) (jingle:status-code-number :bad-request))
+              "Status code is Bad Request")
+          ;; Check HTTP headers
+          (ok (string= (get-header (dexador:response-headers e) :content-type) "application/json")
+              "Content-Type matches"))))))
 
 (deftest create-product-by-id-tests
   (testing "POST /api/v1/product/:id"
@@ -200,6 +225,24 @@
           ;; Check body
           (let ((api-error (jonathan:parse (dexador:response-body e))))
             (ok (string= (getf api-error :|error|) "product already exists")
+                "Error message matches"))))))
+
+  (testing "POST /api/v1/product/:id - missing NAME in payload"
+    (let* ((payload (jonathan:to-json (list :|required-field-is-missing| "new product")))
+           (headers '(("Accept" . "application/json")
+                      ("Content-Type" . "application/json")))
+           (uri (jingle:url-for *test-app* "create-product"))) ;; reverse url
+      (handler-case (dexador:post uri :headers headers :content payload)
+        (dexador:http-request-failed (e)
+          ;; Check status code
+          (ok (= (dexador:response-status e) (jingle:status-code-number :bad-request))
+              "Status code is Bad Request")
+          ;; Check HTTP headers
+          (ok (string= (get-header (dexador:response-headers e) :content-type) "application/json")
+              "Content-Type matches")
+          ;; Check body
+          (let ((api-error (jonathan:parse (dexador:response-body e))))
+            (ok (string= (getf api-error :|error|) "must provide product name")
                 "Error message matches")))))))
 
 (deftest delete-product-by-id-tests
@@ -232,5 +275,16 @@
           ;; Check body
           (let ((api-error (jonathan:parse (dexador:response-body e))))
             (ok (string= (getf api-error :|error|) "product not found")
-                "Error message matches")))))))
+                "Error message matches"))))))
 
+  (testing "DELETE /api/v1/product/:id - with invalid ID value"
+    (let* ((id "this-is-a-bad-id")
+           (uri (jingle:url-for *test-app* "delete-product-by-id" :id id))) ;; reverse url
+      (handler-case (dexador:delete uri)
+        (dexador:http-request-failed (e)
+          ;; Check status code
+          (ok (= (dexador:response-status e) (jingle:status-code-number :bad-request))
+              "Status code is Bad Request")
+          ;; Check HTTP headers
+          (ok (string= (get-header (dexador:response-headers e) :content-type) "application/json")
+              "Content-Type matches"))))))
