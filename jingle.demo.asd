@@ -72,7 +72,7 @@
                              (:static-file "swagger-ui-standalone-preset.js")
                              (:static-file "swagger-ui-standalone-preset.js.map")))
                (:module "demo"
-                :pathname #P"demo/"
+                :pathname #P"demo/src/"
                 :depends-on ("swagger-ui-dist")
                 :serial t
                 :components ((:file "api")
