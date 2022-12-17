@@ -49,7 +49,7 @@ which allow you to interface with the REST APIs.
 You can also run the demo app in Docker. First, build the image.
 
 #+begin_src shell
-  make docker-demo
+  make demo-docker
 #+end_src
 
 Once the image is built you can start up the service by executing the

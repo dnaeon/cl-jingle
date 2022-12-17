@@ -8,7 +8,10 @@ demo:
 demo-doc: demo
 	./bin/jingle-demo print-doc > docs/jingle-demo.md
 
-docker-demo:
+demo-docker:
 	docker build -t cl-jingle:latest -f Dockerfile.demo .
 
-.PHONY: demo demo-doc docker-demo
+demo-test:
+	./scripts/run-demo-tests.sh
+
+.PHONY: demo demo-doc demo-docker demo-test
