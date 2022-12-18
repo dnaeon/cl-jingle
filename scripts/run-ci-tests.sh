@@ -21,5 +21,5 @@ fi
 mkdir -p "${ASDF_SOURCE_REGISTRY}"
 echo "(:tree \"${SYSTEMS_DIR}\")" > "${ASDF_SOURCE_REGISTRY}/workspace.conf"
 
-# ${SCRIPTS_DIR}/run-tests.sh
+${SCRIPTS_DIR}/run-tests.sh
 ${SCRIPTS_DIR}/run-demo-tests.sh
