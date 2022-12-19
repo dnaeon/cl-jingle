@@ -1,0 +1,22 @@
+# .github/workflows/docker.yaml
+#
+# See [1] and [2] for more details
+#
+# [1]: https://github.com/marketplace/actions/build-and-push-docker-images
+# [2]: https://github.com/docker/buildx
+name: docker-image
+
+on: [ push, pull_request ]
+
+jobs:
+  docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build Docker image
+        uses: docker/build-push-action@v3
+        with:
+          push: false
+          file: Dockerfile.demo
+          tags: jingle-demo:latest
