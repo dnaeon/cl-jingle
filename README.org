@@ -13,7 +13,7 @@ clone the repo and add it to your [[https://www.quicklisp.org/beta/faq.html][Qui
 
 #+begin_src shell
   cd ~/quicklisp/local-projects
-  git clone https://github.com/dnaeon/jingle.git
+  git clone https://github.com/dnaeon/cl-jingle.git
 #+end_src
 
 * Demo
@@ -962,7 +962,7 @@ which provides the test suite for the demo application.
 
 * Contributing
 
-=jingle= is hosted on [[https://github.com/dnaeon/jingle][Github]]. Please contribute by reporting issues,
+=jingle= is hosted on [[https://github.com/dnaeon/cl-jingle][Github]]. Please contribute by reporting issues,
 suggesting features or by sending patches using pull requests.
 
 * License
