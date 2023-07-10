@@ -9,7 +9,7 @@ name: docker-image
 on: [ push, pull_request ]
 
 jobs:
-  docker-image:
+  docker-demo:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
