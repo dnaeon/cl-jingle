@@ -24,7 +24,7 @@
 ;; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-user)
-(defpackage :jingle
+(uiop:define-package :jingle
   (:use :cl)
   (:import-from :jingle.core)
   (:import-from :ningle)
