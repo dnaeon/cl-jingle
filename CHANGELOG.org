@@ -1,3 +1,10 @@
+* 11.11.2025
+
+=find-route= and =url-for= methods now expect =NAME= to be a symbol
+instead of string.
+
+=jingle= has been tagged =v0.2.0=.
+
 * 15.12.2022
 
 =jingle= has been tagged =v0.1.0=.

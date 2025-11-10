@@ -342,13 +342,13 @@ PATH, serving files from ROOT"
           (set-response-header :content-type "text/html; charset=utf-8")
           (redirect location code))))
 
-(defmethod find-route ((app app) (name string))
+(defmethod find-route ((app app) (name symbol))
   "Returns the route with the given NAME, if registered."
   (let* ((routes (myway:mapper-routes (ningle.app::mapper app)))
-         (route (find name routes :test #'string= :key #'myway:route-name)))
+         (route (find name routes :test #'eq :key #'myway:route-name)))
     route))
 
-(defmethod url-for ((app app) (name string) &rest params)
+(defmethod url-for ((app app) (name symbol) &rest params)
   "Return the URL for the given route NAME with PARAMS applied to it"
   (let ((route (find-route app name)))
     (unless route
@@ -362,7 +362,7 @@ PATH, serving files from ROOT"
         (let ((params-alist (loop :for (k v) :on params-plist :by #'cddr :collect (cons (princ-to-string k) v))))
           (quri:make-uri :path path :query params-alist))))))
 
-(defmethod url-for ((app test-app) (name string) &rest params)
+(defmethod url-for ((app test-app) (name symbol) &rest params)
   "Return the URL for the given route NAME with PARAMS applied to it"
   ;; When returning URLs for TEST-APP instances we can return the full
   ;; URL with scheme, hostname, port, etc. to make things easy while
