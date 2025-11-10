@@ -63,7 +63,7 @@
 
 (deftest ping-tests
   (testing "GET /api/v1/ping"
-    (let ((uri (jingle:url-for *test-app* "ping"))) ;; reverse url
+    (let ((uri (jingle:url-for *test-app* :ping))) ;; reverse url
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check HTTP Status Code
         (ok (= code (jingle:status-code-number :ok))
@@ -87,7 +87,7 @@
   (testing "GET /api/v1/product - first page of products"
     (let* ((from 0)
            (to 2)
-           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-products-page :|from| from :|to| to)) ;; reverse url
            (want-product-names '("foo" "bar"))) ;; products with id 1 and 2
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check status code
@@ -103,7 +103,7 @@
   (testing "GET /api/v1/product - second page of products"
     (let* ((from 2)
            (to 4)
-           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-products-page :|from| from :|to| to)) ;; reverse url
            (want-product-names '("baz" "qux"))) ;; products with id 3 and 4
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check status code
@@ -119,7 +119,7 @@
   (testing "GET /api/v1/product - third page of products (empty)"
     (let* ((from 100)  ;; we don't have products at this offset
            (to 200)    ;; we don't have products at this offset
-           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to)) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-products-page :|from| from :|to| to)) ;; reverse url
            (want-product-names nil))
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check status code
@@ -135,7 +135,7 @@
   (testing "GET /api/v1/product - invalid FROM and TO query params"
     (let* ((from "here")
            (to "there")
-           (uri (jingle:url-for *test-app* "get-products-page" :|from| from :|to| to))) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-products-page :|from| from :|to| to))) ;; reverse url
       (handler-case (dexador:get uri)
         (dexador:http-request-failed (e)
           ;; Check status code
@@ -148,7 +148,7 @@
 (deftest get-product-by-id-tests
   (testing "GET /api/v1/product/:id - get existing product"
     (let* ((id 1)
-           (uri (jingle:url-for *test-app* "get-product-by-id" :id id)) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-product-by-id :id id)) ;; reverse url
            (want-product '(:|id| 1 :|name| "foo"))) ;; products with id 1
       (multiple-value-bind (body code headers) (dexador:get uri)
         ;; Check status code
@@ -166,7 +166,7 @@
 
   (testing "GET /api/v1/product/:id - get non-existing product"
     (let* ((id 42) ;; non-existing product id
-           (uri (jingle:url-for *test-app* "get-product-by-id" :id id))) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-product-by-id :id id))) ;; reverse url
       (handler-case (dexador:get uri)
         (dexador:http-request-failed (e)
           ;; Check status code
@@ -182,7 +182,7 @@
 
   (testing "GET /api/v1/product/:id - invalid ID"
     (let* ((id "invalid")
-           (uri (jingle:url-for *test-app* "get-product-by-id" :id id))) ;; reverse url
+           (uri (jingle:url-for *test-app* :get-product-by-id :id id))) ;; reverse url
       (handler-case (dexador:get uri)
         (dexador:http-request-failed (e)
           ;; Check status code
@@ -198,7 +198,7 @@
            (payload (jonathan:to-json (list :|name| new-product-name)))
            (headers '(("Accept" . "application/json")
                       ("Content-Type" . "application/json")))
-           (uri (jingle:url-for *test-app* "create-product"))) ;; reverse url
+           (uri (jingle:url-for *test-app* :create-product))) ;; reverse url
       ;; Create the product for the first time
       (multiple-value-bind (body code headers) (dexador:post uri :headers headers :content payload)
         ;; Check status code
@@ -231,7 +231,7 @@
     (let* ((payload (jonathan:to-json (list :|required-field-is-missing| "new product")))
            (headers '(("Accept" . "application/json")
                       ("Content-Type" . "application/json")))
-           (uri (jingle:url-for *test-app* "create-product"))) ;; reverse url
+           (uri (jingle:url-for *test-app* :create-product))) ;; reverse url
       (handler-case (dexador:post uri :headers headers :content payload)
         (dexador:http-request-failed (e)
           ;; Check status code
@@ -248,7 +248,7 @@
 (deftest delete-product-by-id-tests
   (testing "DELETE /api/v1/product/:id"
     (let* ((id 1) ;; product with name `foo`
-           (uri (jingle:url-for *test-app* "delete-product-by-id" :id id))) ;; reverse url
+           (uri (jingle:url-for *test-app* :delete-product-by-id :id id))) ;; reverse url
       ;; Delete the product
       (multiple-value-bind (body code headers) (dexador:delete uri)
         ;; Check status code
@@ -279,7 +279,7 @@
 
   (testing "DELETE /api/v1/product/:id - with invalid ID value"
     (let* ((id "this-is-a-bad-id")
-           (uri (jingle:url-for *test-app* "delete-product-by-id" :id id))) ;; reverse url
+           (uri (jingle:url-for *test-app* :delete-product-by-id :id id))) ;; reverse url
       (handler-case (dexador:delete uri)
         (dexador:http-request-failed (e)
           ;; Check status code

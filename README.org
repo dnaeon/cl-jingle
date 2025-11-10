@@ -911,9 +911,9 @@ can later refer to.
 
 #+begin_src lisp
   CL-USER> (defparameter *app* (jingle:make-app))
-  CL-USER> (setf (jingle:route *app* "/api/v1/product" :method :get :identifier "get-products-page")
+  CL-USER> (setf (jingle:route *app* "/api/v1/product" :method :get :identifier :get-products-page)
                  #'get-products-page-handler)
-  CL-USER> (setf (jingle:route *app* "/api/v1/product/:name" :method :get :identifier "get-product-by-name")
+  CL-USER> (setf (jingle:route *app* "/api/v1/product/:name" :method :get :identifier :get-product-by-name)
                  #'get-product-handler)
 #+end_src
 
@@ -921,9 +921,9 @@ Now, we can get the actual URLs for our HTTP handlers by using their
 names.
 
 #+begin_src lisp
-  CL-USER> (jingle:url-for *app* "get-product-by-name" :name "foo")
+  CL-USER> (jingle:url-for *app* :get-product-by-name :name "foo")
   #<QURI.URI:URI /api/v1/product/foo>
-  CL-USER> (jingle:url-for *app* "get-products-page" :|from| 0 :|to| 100)
+  CL-USER> (jingle:url-for *app* :get-products-page :|from| 0 :|to| 100)
   #<QURI.URI:URI /api/v1/product?from=0&to=100>
 #+end_src
 
@@ -940,7 +940,7 @@ Once you resolve the URL for a particular handler you can construct
 the final URL, which will contain scheme, hostname, etc.
 
 #+begin_src lisp
-  CL-USER> (jingle:url-for *app* "get-product-by-name" :name "foo")
+  CL-USER> (jingle:url-for *app* :get-product-by-name :name "foo")
   #<QURI.URI:URI /api/v1/product/foo>
   CL-USER> (quri:merge-uris * (quri:make-uri :host "example.org" :scheme "https"))
   #<QURI.URI.HTTP:URI-HTTPS https://example.org/api/v1/product/foo>

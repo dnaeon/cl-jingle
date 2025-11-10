@@ -175,11 +175,11 @@ demo."
         new-item))))
 
 (defparameter *urls*
-  `((:method :GET    :path "/api/v1/ping"        :handler ,#'ping-handler                 :name "ping")
-    (:method :GET    :path "/api/v1/product"     :handler ,#'get-products-page-handler    :name "get-products-page")
-    (:method :GET    :path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler    :name "get-product-by-id")
-    (:method :POST   :path "/api/v1/product"     :handler ,#'create-product-handler       :name "create-product")
-    (:method :DELETE :path "/api/v1/product/:id" :handler ,#'delete-product-by-id-handler :name "delete-product-by-id"))
+  `((:method :GET    :path "/api/v1/ping"        :handler ,#'ping-handler                 :name :ping)
+    (:method :GET    :path "/api/v1/product"     :handler ,#'get-products-page-handler    :name :get-products-page)
+    (:method :GET    :path "/api/v1/product/:id" :handler ,#'get-product-by-id-handler    :name :get-product-by-id)
+    (:method :POST   :path "/api/v1/product"     :handler ,#'create-product-handler       :name :create-product)
+    (:method :DELETE :path "/api/v1/product/:id" :handler ,#'delete-product-by-id-handler :name :delete-product-by-id))
   "The URLs map of our API")
 
 (defun register-urls (app)
