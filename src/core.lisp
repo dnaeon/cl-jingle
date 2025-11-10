@@ -344,9 +344,7 @@ PATH, serving files from ROOT"
 
 (defmethod find-route ((app app) (name symbol))
   "Returns the route with the given NAME, if registered."
-  (let* ((routes (myway:mapper-routes (ningle.app::mapper app)))
-         (route (find name routes :test #'eq :key #'myway:route-name)))
-    route))
+  (myway:find-route-by-name (ningle.app::mapper app) name))
 
 (defmethod url-for ((app app) (name symbol) &rest params)
   "Return the URL for the given route NAME with PARAMS applied to it"
